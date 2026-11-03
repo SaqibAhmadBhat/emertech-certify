@@ -8,6 +8,8 @@ const OcrService = require('../services/OcrService');
 class VerifyController {
   /**
    * Mode 1: Verification by 64-character hexadecimal SHA-256 Hash.
+   * A result is ONLY classified as AUTHENTIC if confirmed by an active on-chain contract state.
+   * If blockchain is unavailable or contract call fails, returns OFFCHAIN_DEMO.
    */
   static async verifyByHash(req, res, next) {
     try {
@@ -32,32 +34,50 @@ class VerifyController {
         return res.status(404).json({
           success: false,
           status: 'NOT_FOUND',
+          onChainVerified: false,
           message: 'Certificate hash does not exist in the blockchain or off-chain registry.',
           queryHash: cleanHash
         });
       }
 
-      const isRevoked = blockchainRecord.isRevoked || (dbRecord && dbRecord.isRevoked);
+      let status;
+      let onChainVerified = false;
+      let verificationNote = '';
 
-      let status = 'AUTHENTIC';
-      if (isRevoked) {
-        status = 'REVOKED';
+      if (blockchainRecord.onChain && blockchainRecord.exists) {
+        onChainVerified = true;
+        status = blockchainRecord.isRevoked ? 'REVOKED' : 'AUTHENTIC';
+        verificationNote = 'Verified against Ethereum smart contract state.';
+      } else if (!blockchainRecord.onChain && dbRecord) {
+        // Fallback: Smart contract was not reachable
+        onChainVerified = false;
+        status = dbRecord.isRevoked ? 'REVOKED' : 'OFFCHAIN_DEMO';
+        verificationNote = 'Operating in offline demonstration mode: verified against off-chain database only, not anchored on-chain.';
+      } else {
+        // Contract responded but record does not exist on-chain
+        onChainVerified = false;
+        status = dbRecord && dbRecord.isRevoked ? 'REVOKED' : 'OFFCHAIN_DEMO';
+        verificationNote = 'Certificate record found off-chain, but not currently registered on the connected smart contract.';
       }
+
+      const isRevoked = status === 'REVOKED';
 
       // Log verification event
       await AuditLog.create({
-        eventType: isRevoked ? 'REVOCATION' : 'VERIFICATION_SUCCESS',
+        eventType: isRevoked ? 'REVOCATION' : (onChainVerified ? 'VERIFICATION_SUCCESS' : 'OFFCHAIN_VERIFICATION'),
         certHash: cleanHash,
         clientIp: req.ip,
-        diagnosticDetails: { status, mode: 'HASH_DIRECT', onChain: blockchainRecord.onChain }
+        diagnosticDetails: { status, mode: 'HASH_DIRECT', onChain: onChainVerified }
       });
 
       res.status(200).json({
         success: true,
         status,
+        onChainVerified,
+        verificationNote,
         verificationData: {
           certHash: cleanHash,
-          onChainVerified: blockchainRecord.onChain,
+          onChainVerified,
           isRevoked,
           revocationReason: dbRecord ? dbRecord.revocationReason : undefined,
           studentName: dbRecord ? dbRecord.studentName : 'Verified Graduate',
@@ -80,33 +100,46 @@ class VerifyController {
    */
   static async verifyByFile(req, res, next) {
     try {
-      if (!req.file || !req.file.buffer) {
+      const file = req.file || (req.files && req.files[0]);
+      if (!file || !file.buffer) {
         return res.status(400).json({ success: false, message: 'No PDF file uploaded for verification.' });
       }
 
-      const fileBuffer = req.file.buffer;
+      const fileBuffer = file.buffer;
       const computedHash = CryptoService.computeSha256(fileBuffer);
       const { expectedCertificateId, expectedHash } = req.body;
 
-      // 1. Direct Hash Match
+      // 1. Check exact match in database
       const exactMatch = await Certificate.findOne({
         $or: [{ fileHash: computedHash }, { certHash: computedHash }]
       });
 
       if (exactMatch) {
-        const isRevoked = exactMatch.isRevoked;
-        const status = isRevoked ? 'REVOKED' : 'AUTHENTIC';
+        // Query blockchain to verify on-chain anchoring status
+        const blockchainRecord = await BlockchainService.verifyCertificate(exactMatch.certHash);
+        const onChainVerified = blockchainRecord.onChain && blockchainRecord.exists;
+        const isRevoked = exactMatch.isRevoked || blockchainRecord.isRevoked;
+
+        let status;
+        if (isRevoked) {
+          status = 'REVOKED';
+        } else if (onChainVerified) {
+          status = 'AUTHENTIC';
+        } else {
+          status = 'OFFCHAIN_DEMO';
+        }
 
         await AuditLog.create({
           eventType: isRevoked ? 'REVOCATION' : 'VERIFICATION_SUCCESS',
           certHash: exactMatch.certHash,
           clientIp: req.ip,
-          diagnosticDetails: { status, mode: 'FILE_UPLOAD', computedHash }
+          diagnosticDetails: { status, mode: 'FILE_UPLOAD', computedHash, onChain: onChainVerified }
         });
 
         return res.status(200).json({
           success: true,
           status,
+          onChainVerified,
           computedHash,
           tamperDetected: false,
           verificationData: {
@@ -134,7 +167,7 @@ class VerifyController {
         });
       }
 
-      // 3. Fallback: Parse PDF metadata or text stream
+      // 3. Fallback: Parse PDF metadata
       if (!targetRecord) {
         try {
           const loadedPdf = await PDFDocument.load(fileBuffer, { ignoreEncryption: true });
@@ -183,6 +216,7 @@ class VerifyController {
           success: true,
           status: 'TAMPER_DETECTED',
           tamperDetected: true,
+          onChainVerified: false,
           message: 'CRITICAL: The uploaded document has been modified. Computed SHA-256 does not match recorded digest.',
           computedHash,
           expectedHash: targetRecord.fileHash || targetRecord.certHash,
@@ -194,6 +228,7 @@ class VerifyController {
       return res.status(404).json({
         success: false,
         status: 'NOT_FOUND',
+        onChainVerified: false,
         message: 'No corresponding certificate found for uploaded document.',
         computedHash
       });
@@ -242,7 +277,6 @@ class VerifyController {
 
       const parsed = OcrService.parseAcademicEntities(ocrRes.text);
 
-      // Attempt matching against DB
       let matchedCert = null;
       if (parsed.detectedStudentId) {
         matchedCert = await Certificate.findOne({ studentIdentifier: parsed.detectedStudentId });
@@ -253,7 +287,7 @@ class VerifyController {
         ocrEngine: 'Tesseract.js WebAssembly Neural OCR',
         extractedText: ocrRes.text,
         parsedEntities: parsed,
-        matchFound: !!matchedCert,
+        matchFound: Boolean(matchedCert),
         matchedCertificate: matchedCert ? {
           certificateId: matchedCert.certificateId,
           certHash: matchedCert.certHash,

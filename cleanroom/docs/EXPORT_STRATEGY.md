@@ -153,3 +153,4 @@ git push v2-remote v2-standalone-branch:main
 | **Authorship** | Saqib Ahmad Bhat | Saqib Ahmad Bhat (v2) + Alwin James (v1 upstream base) |
 | **Legal Notices** | MIT License (Saqib Ahmad Bhat) | MIT License + `NOTICE.md` attribution to Alwin James |
 | **Status** | Independent standalone production release | Comprehensive portfolio & academic audit repository |
+

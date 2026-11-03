@@ -12,7 +12,7 @@ const upload = multer({
 router.post('/hash', VerifyController.verifyByHash);
 
 // Mode 2: PDF file binary upload
-router.post('/file', upload.single('certificateFile'), VerifyController.verifyByFile);
+router.post('/file', upload.any(), VerifyController.verifyByFile);
 
 // Mode 3: QR code payload
 router.post('/qr', VerifyController.verifyByQr);

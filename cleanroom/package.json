@@ -6,8 +6,8 @@
   "license": "MIT",
   "scripts": {
     "test:contracts": "cd contracts && npx hardhat test",
-    "test:backend": "cd backend && node test/cleanroom.api.test.js",
-    "test:all": "cd contracts && npx hardhat test && cd ../backend && node test/cleanroom.api.test.js",
+    "test:backend": "cd backend && npm test",
+    "test:all": "npm run test:contracts && npm run test:backend",
     "compile:contracts": "cd contracts && npx hardhat compile",
     "build:frontend": "cd frontend && CI=true npm run build",
     "start:backend": "cd backend && node src/server.js",
