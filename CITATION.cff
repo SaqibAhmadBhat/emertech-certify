@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use or reference Emertech Certify in academic publications, research, or engineering projects, please cite it as below."
+authors:
+  - family-names: Bhat
+    given-names: Saqib Ahmad
+    affiliation: "Government College of Engineering, Tirunelveli - Department of Computer Science and Engineering"
+title: "Emertech Certify: AI-Assisted Blockchain-Based Academic Certificate Verification System"
+version: 1.0.0
+date-released: 2026-11-03
+url: "https://github.com/SaqibAhmadBhat/emertech-certify"
+repository-code: "https://github.com/SaqibAhmadBhat/emertech-certify"
+license: MIT
+keywords:
+  - blockchain
+  - ethereum
+  - smart-contracts
+  - academic-verification
+  - credential-integrity
+  - ocr
+  - tesseract
+  - sha-256
+  - ipfs
+  - web3
+  - react
+abstract: "Emertech Certify is an academic, decentralized credential verification architecture integrating Ethereum smart contracts, deterministic SHA-256 cryptographic digests, IPFS content-addressed storage, and client-side OCR text extraction to eliminate academic credential fraud and provide instantaneous, tamper-evident verification."

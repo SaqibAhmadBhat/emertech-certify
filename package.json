@@ -8,11 +8,14 @@
     "test:contracts": "cd contracts && npm test",
     "test:backend": "cd backend && npm test",
     "test:all": "cd contracts && npm test && cd ../backend && npm test",
+    "contracts:compile": "cd contracts && npx hardhat compile",
+    "contracts:test": "cd contracts && npm test",
+    "backend:test": "cd backend && npm test",
     "compile:contracts": "cd contracts && npx hardhat compile",
     "deploy:contracts": "cd contracts && npm run deploy:localhost",
     "start:backend": "cd backend && npm start",
     "start:frontend": "cd frontend/certiport-frontend && npm start",
-    "build:frontend": "cd frontend/certiport-frontend && npm run build"
+    "build:frontend": "cd frontend/certiport-frontend && npm run build",
+    "install:all": "npm install && cd contracts && npm install && cd ../backend && npm install && cd ../frontend/certiport-frontend && npm install"
   }
 }
-

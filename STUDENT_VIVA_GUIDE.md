@@ -175,3 +175,4 @@ Follow these steps during your project viva:
 > 1. **Decentralized Identifiers (DIDs) and W3C Verifiable Credentials**: Standardizing the credential format across global academic consortia.
 > 2. **Zero-Knowledge Proofs (ZK-SNARKs)**: Enabling students to prove specific attributes (such as *"GPA is above 8.0"* or *"graduated after 2024"*) without revealing their full marks or transcript.
 > 3. **Layer 2 Rollup Deployment**: Deploying contracts on Arbitrum or Polygon with automated meta-transactions (EIP-2771) so universities do not need to manage gas tokens directly.
+

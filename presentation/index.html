@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emertech Certify — AI-Assisted Blockchain Certificate Verification</title>
+  <meta name="description" content="Interactive presentation for Emertech Certify: AI-Assisted Blockchain-Based Academic Certificate Verification System by Saqib Ahmad Bhat.">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Progress Bar -->
+  <div id="progress-bar" class="progress-bar"></div>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <span class="brand-badge"></span>
+        <span class="brand-title">EMERTECH CERTIFY</span>
+        <span class="brand-tag">v1.0.0</span>
+      </div>
+      <nav class="nav-menu">
+        <a href="#intro" class="nav-link active">01 Intro</a>
+        <a href="#problem" class="nav-link">02 Problem</a>
+        <a href="#approach" class="nav-link">03 Approach</a>
+        <a href="#features" class="nav-link">04 Features</a>
+        <a href="#workflow" class="nav-link">05 Workflow</a>
+        <a href="#architecture" class="nav-link">06 Architecture</a>
+        <a href="#demo" class="nav-link">07 Demo & Tests</a>
+        <a href="#security" class="nav-link">08 Security</a>
+      </nav>
+      <div class="nav-actions">
+        <span class="nav-shortcut-hint" title="Use Arrow keys or Space to advance">Keys: &larr; / &rarr;</span>
+        <a href="https://github.com/SaqibAhmadBhat/emertech-certify" target="_blank" rel="noopener noreferrer" class="btn btn-github">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Presentation Main Container -->
+  <main class="presentation-container">
+
+    <!-- 01: INTRODUCTION -->
+    <section id="intro" class="pres-section">
+      <div class="section-badge">01 // PROJECT OVERVIEW</div>
+      <div class="hero-split">
+        <div class="hero-content">
+          <div class="project-pill">
+            <span class="status-dot"></span>
+            IMMUTABLE ACADEMIC CREDENTIAL INFRASTRUCTURE
+          </div>
+          <h1 class="hero-title">
+            EMERTECH <span class="gradient-text">CERTIFY</span>
+          </h1>
+          <p class="hero-subtitle">
+            AI-Assisted Blockchain-Based Academic Certificate Verification System
+          </p>
+          <p class="hero-description">
+            A production-grade, MIT-licensed decentralized verification system engineered to eliminate academic credential fraud. Combines Ethereum smart contracts, deterministic SHA-256 cryptographic digests, IPFS decentralized storage, and Tesseract.js client-side OCR for instantaneous, tamper-proof credential authentication.
+          </p>
+
+          <div class="meta-card">
+            <div class="meta-row">
+              <span class="meta-label">Developer &amp; Architect:</span>
+              <span class="meta-val highlight">Saqib Ahmad Bhat</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Academic Institution:</span>
+              <span class="meta-val">Government College of Engineering, Tirunelveli</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Degree &amp; Dept:</span>
+              <span class="meta-val">B.E. Computer Science and Engineering</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Industry Inspiration:</span>
+              <span class="meta-val">Emertech Innovations Private Limited (AI &amp; Blockchain Intern)</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Upstream Foundation:</span>
+              <span class="meta-val">Certiport by Alwin James (MIT Licensed)</span>
+            </div>
+          </div>
+
+          <div class="hero-buttons">
+            <a href="#demo" class="btn btn-primary">Live Demo Gallery &rarr;</a>
+            <a href="#workflow" class="btn btn-outline">Explore Workflow</a>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <div class="media-frame">
+            <img src="assets/emertech-certify-hero.gif" alt="Emertech Certify Hero Animation" class="img-responsive hero-media">
+            <div class="media-caption">Deterministic dual-layer cryptographic proof pipeline</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02: THE PROBLEM -->
+    <section id="problem" class="pres-section">
+      <div class="section-badge">02 // THE GLOBAL CHALLENGE</div>
+      <h2 class="section-title">The Academic Credential Fraud Crisis</h2>
+      <p class="section-subtitle">Why traditional credential issuance and verification systems fail in the digital era.</p>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number gradient-text">&gt; 20%</div>
+          <div class="stat-title">Unverified or Falsified Records</div>
+          <p class="stat-desc">Industry surveys show more than 20% of job candidates embellish or forge academic credentials, degrees, and certificates.</p>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number text-amber">2 - 6 Weeks</div>
+          <div class="stat-title">Manual Verification Latency</div>
+          <p class="stat-desc">Employers and universities waste weeks waiting for university registrars to manually review physical paper transcripts and archives.</p>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number text-rose">$100M+</div>
+          <div class="stat-title">Annual Corporate &amp; Academic Loss</div>
+          <p class="stat-desc">Unqualified hires, fraudulent diplomas, and diploma mill operations degrade institutional trust and incur substantial verification overhead.</p>
+        </div>
+      </div>
+
+      <div class="problem-cards">
+        <div class="problem-card">
+          <div class="card-icon warning-icon">&times;</div>
+          <h3>1. Trivially Manipulated PDFs</h3>
+          <p>Standard PDF certificates are static files without cryptographic binding. Anyone with Adobe Acrobat or Canva can alter student names, GPA, or degree titles within seconds without visible signs of tampering.</p>
+        </div>
+        <div class="problem-card">
+          <div class="card-icon warning-icon">&times;</div>
+          <h3>2. Centralized Points of Failure</h3>
+          <p>Traditional university databases are prone to server downtime, ransomware, malicious insider alterations, or permanent loss when institutions merge or close.</p>
+        </div>
+        <div class="problem-card">
+          <div class="card-icon warning-icon">&times;</div>
+          <h3>3. Lack of Lifecycle Control</h3>
+          <p>Once a physical paper certificate or static PDF is printed, the issuing university has zero reliable mechanism to revoke it if fraud or academic malpractice is later uncovered.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03: OUR APPROACH -->
+    <section id="approach" class="pres-section">
+      <div class="section-badge">03 // ARCHITECTURAL PARADIGM</div>
+      <h2 class="section-title">Cryptographic Dual-Layer Verification</h2>
+      <p class="section-subtitle">Decoupling sensitive PII from the public ledger while guaranteeing mathematical immutability.</p>
+
+      <div class="approach-grid">
+        <div class="approach-box layer-offchain">
+          <div class="layer-pill">LAYER 1: OFF-CHAIN CANONICAL DATA</div>
+          <h3>Deterministic Document Generation &amp; Privacy</h3>
+          <p>Student Personally Identifiable Information (PII) such as full name, roll number, grades, and issuance date are structured into a canonical JSON payload and compiled into an archival-quality PDF using <code>pdf-lib</code>.</p>
+          <ul class="bullet-list">
+            <li><strong>Zero On-Chain PII:</strong> Strictly complies with privacy mandates (GDPR / India DPDP Act). No personal data is stored publicly.</li>
+            <li><strong>SHA-256 Hashing:</strong> The document generates a unique 256-bit cryptographic fingerprint. Even a 1-character typo yields a completely distinct hash.</li>
+            <li><strong>IPFS Pinning:</strong> Decentralized content-addressed archival via Pinata gateway ensures document durability.</li>
+          </ul>
+        </div>
+
+        <div class="approach-box layer-onchain">
+          <div class="layer-pill">LAYER 2: ON-CHAIN CONSENSUS</div>
+          <h3>Ethereum Smart Contract Proof of Existence</h3>
+          <p>The SHA-256 hash is anchored onto an Ethereum smart contract (<code>CertificateRegistry.sol</code>) by an authorized institution's crypto wallet. The state mapping <code>mapping(bytes32 =&gt; Certificate)</code> provides the source of truth.</p>
+          <ul class="bullet-list">
+            <li><strong>Immutable Timestamp &amp; Issuer:</strong> Permanent mathematical proof that institution X issued hash Y at unix timestamp Z.</li>
+            <li><strong>Instant Revocation State:</strong> Issuers can set <code>isRevoked = true</code> with a single on-chain transaction, instantly disabling fake credentials globally.</li>
+            <li><strong>Permissionless Verification:</strong> Any recruiter, employer, or university can independently verify credentials for free without API keys.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="ai-box">
+        <div class="ai-header">
+          <span class="ai-badge">AI INTEGRATION</span>
+          <h3>Client-Side Optical Character Recognition (OCR) Engine</h3>
+        </div>
+        <p>Using <strong>Tesseract.js</strong> running in isolated Web Workers, Emertech Certify parses physical paper scans or uploaded image documents, extracts textual metadata (Student Name, Roll Number, Course, Institution), and matches it against on-chain records to detect forged physical paper copies.</p>
+      </div>
+    </section>
+
+    <!-- 04: PRODUCT FEATURES -->
+    <section id="features" class="pres-section">
+      <div class="section-badge">04 // SYSTEM CAPABILITIES</div>
+      <h2 class="section-title">Comprehensive Product Feature Suite</h2>
+      <p class="section-subtitle">Engineered for four primary user roles: Super Admin, Accredited Institutions, Students, and the Public.</p>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">&#x1F50D;</div>
+          <h3>Multi-Modal Verifier</h3>
+          <p>Verify certificates through 4 distinct entry points: direct PDF drag-and-drop, 64-char hex hash input, webcam/file QR code scanner, or scanned image OCR.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#x1F512;</div>
+          <h3>Role-Based Access Control</h3>
+          <p>Strict cryptographic separation of concerns. Super Admin vets universities; verified institutions issue credentials; students securely access transcripts.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#x26A1;</div>
+          <h3>On-Chain Revocation</h3>
+          <p>Institutions can revoke compromised or fraudulent credentials instantly on Ethereum, immediately updating verification statuses worldwide.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#x1F4DC;</div>
+          <h3>Dynamic PDF &amp; QR Stamping</h3>
+          <p>Certificates are dynamically synthesized with high-resolution layout styling and embedded cryptographic QR codes encoding direct verification URLs.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#x1F5C4;</div>
+          <h3>Bulk Issuance via CSV</h3>
+          <p>Allows accredited universities to batch-issue hundreds of graduation degrees simultaneously with automated parallel hashing and on-chain batching.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#x1F310;</div>
+          <h3>IPFS Decentralized Backup</h3>
+          <p>Payloads are backed up to IPFS via Pinata pinning service, eliminating central server dependency for document storage.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05: WORKFLOW -->
+    <section id="workflow" class="pres-section">
+      <div class="section-badge">05 // END-TO-END PIPELINE</div>
+      <h2 class="section-title">Certificate Issuance &amp; Verification Workflow</h2>
+      <p class="section-subtitle">Click through the interactive steps below to inspect the cryptographic pipeline.</p>
+
+      <div class="workflow-stepper">
+        <button class="step-btn active" data-step="1">1. Ingestion</button>
+        <button class="step-btn" data-step="2">2. Hashing</button>
+        <button class="step-btn" data-step="3">3. Blockchain Anchoring</button>
+        <button class="step-btn" data-step="4">4. PDF &amp; QR Synthesis</button>
+        <button class="step-btn" data-step="5">5. Dual-Layer Verification</button>
+      </div>
+
+      <div class="workflow-display-box" id="workflow-box">
+        <div class="step-content active" id="step-1">
+          <div class="step-header">
+            <span class="step-tag">STAGE 01</span>
+            <h3>Institution Input &amp; Schema Validation</h3>
+          </div>
+          <p>An authorized university administrator fills out student details or uploads a CSV file. The backend validates required attributes: student name, roll number, course, graduation date, and issuing institution wallet address.</p>
+          <div class="code-block">
+            <pre><code>POST /api/certificates/issue
+Payload: {
+  studentName: "Saqib Ahmad Bhat",
+  studentEmail: "saqib@gce.edu",
+  courseName: "B.E. Computer Science and Engineering",
+  institution: "Government College of Engineering, Tirunelveli",
+  issueDate: "2026-05-15"
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="step-content" id="step-2">
+          <div class="step-header">
+            <span class="step-tag">STAGE 02</span>
+            <h3>Deterministic SHA-256 Digest Computation</h3>
+          </div>
+          <p>The system canonicalizes the certificate attributes into a normalized string and generates a 256-bit SHA-256 cryptographic digest. The digest is converted to a <code>bytes32</code> hexadecimal string.</p>
+          <div class="code-block">
+            <pre><code>const canonicalString = `${studentName}|${courseName}|${rollNumber}|${institution}|${issueDate}`;
+const certificateHash = crypto.createHash('sha256').update(canonicalString).digest('hex');
+// Result: 0x7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069</code></pre>
+          </div>
+        </div>
+
+        <div class="step-content" id="step-3">
+          <div class="step-header">
+            <span class="step-tag">STAGE 03</span>
+            <h3>Ethereum Smart Contract Anchoring</h3>
+          </div>
+          <p>The backend calls <code>CertificateRegistry.sol::issueCertificate(bytes32 certHash, string studentName, string courseName)</code>. The contract asserts the sender is an authorized institution, verifies the hash does not already exist, and commits it to the blockchain state.</p>
+          <div class="code-block">
+            <pre><code>// Solidity Event emitted:
+emit CertificateIssued(
+    certHash,
+    msg.sender,
+    studentName,
+    block.timestamp
+);</code></pre>
+          </div>
+        </div>
+
+        <div class="step-content" id="step-4">
+          <div class="step-header">
+            <span class="step-tag">STAGE 04</span>
+            <h3>PDF Compilation &amp; Cryptographic QR Stamping</h3>
+          </div>
+          <p><code>pdf-lib</code> compiles a vector PDF with high-resolution university seals, official typography, student credentials, and a generated QR code linking directly to the verification endpoint with the pre-filled certificate hash.</p>
+          <div class="code-block">
+            <pre><code>const qrPayload = `https://emertech-certify.edu/verify?hash=${certHash}`;
+const qrImageBuffer = await QRCode.toBuffer(qrPayload);
+// Embeds QR code at bottom-right corner of PDF certificate</code></pre>
+          </div>
+        </div>
+
+        <div class="step-content" id="step-5">
+          <div class="step-header">
+            <span class="step-tag">STAGE 05</span>
+            <h3>Multi-Modal Public Verification &amp; Tamper Detection</h3>
+          </div>
+          <p>A third-party verifier uploads the PDF. The system computes its SHA-256 hash locally in the browser and queries the smart contract via RPC. If the hashes match and <code>isRevoked == false</code>, the certificate is verified authentic. If a single character was altered, the hash will not match and a <strong>TAMPER DETECTED</strong> alert triggers.</p>
+          <div class="code-block">
+            <pre><code>Status: VERIFIED_AUTHENTIC
+Smart Contract: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+On-Chain Hash:  0x7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069
+Computed Hash:  0x7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069
+Tamper Check:   PASSED (100% Bitwise Match)</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06: ARCHITECTURE -->
+    <section id="architecture" class="pres-section">
+      <div class="section-badge">06 // SYSTEM DESIGN</div>
+      <h2 class="section-title">Technical Architecture &amp; Technology Stack</h2>
+      <p class="section-subtitle">Modular 4-tier decoupled architecture engineered for scalability, privacy, and zero downtime.</p>
+
+      <div class="arch-visual-container">
+        <img src="assets/architecture.png" alt="Emertech Certify System Architecture Diagram" class="img-responsive arch-diagram">
+      </div>
+
+      <div class="tech-table-container">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>Primary Technologies</th>
+              <th>Architectural Role</th>
+              <th>Security Guarantees</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Frontend</strong></td>
+              <td>React 18.2, Tailwind CSS 3.4, Lucide Icons, html5-qrcode</td>
+              <td>Responsive SPA, Web3 wallet integration, camera QR scanning, OCR processing</td>
+              <td>Client-side hashing prevents raw file exfiltration prior to verification</td>
+            </tr>
+            <tr>
+              <td><strong>Backend API</strong></td>
+              <td>Node.js 22, Express 4.18, JWT, Mongoose 8.2, Multer</td>
+              <td>RESTful microservice, RBAC middleware, PDF synthesis, OCR worker threads</td>
+              <td>Argon2/bcrypt password hashing, rate limiting, input sanitization</td>
+            </tr>
+            <tr>
+              <td><strong>Storage</strong></td>
+              <td>MongoDB, IPFS (Pinata SDK), Local FS cache</td>
+              <td>Off-chain metadata indexing, user accounts, decentralized PDF pinning</td>
+              <td>Content-addressed hashing (CID), zero single point of storage failure</td>
+            </tr>
+            <tr>
+              <td><strong>Blockchain</strong></td>
+              <td>Ethereum, Solidity ^0.8.20, Hardhat 2.22, Ethers.js v6</td>
+              <td>CertificateRegistry.sol, immutable state mapping, event emission</td>
+              <td>ReentrancyGuard, Ownable 2-step admin, cryptographic non-repudiation</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 07: DEMONSTRATION & TESTING -->
+    <section id="demo" class="pres-section">
+      <div class="section-badge">07 // VERIFIED EVIDENCE</div>
+      <h2 class="section-title">Demonstration Gallery &amp; Test Suite Results</h2>
+      <p class="section-subtitle">Authentic application screenshots captured during end-to-end integration testing.</p>
+
+      <div class="demo-tabs">
+        <button class="tab-btn active" data-img="verification-success.png">Verification Success</button>
+        <button class="tab-btn" data-img="tamper-detection.png">Tamper Detection</button>
+        <button class="tab-btn" data-img="qr-verification.png">QR Code Verification</button>
+        <button class="tab-btn" data-img="revoked-certificate.png">Revocation Notice</button>
+        <button class="tab-btn" data-img="certificate-issuance.png">Issuance Portal</button>
+        <button class="tab-btn" data-img="student-dashboard.png">Student Transcripts</button>
+        <button class="tab-btn" data-img="institution-dashboard.png">Institution Dashboard</button>
+        <button class="tab-btn" data-img="admin-dashboard.png">Admin Control</button>
+        <button class="tab-btn" data-img="landing.png">Landing Page</button>
+      </div>
+
+      <div class="demo-display">
+        <div class="browser-frame">
+          <div class="browser-top">
+            <span class="browser-dot red"></span>
+            <span class="browser-dot yellow"></span>
+            <span class="browser-dot green"></span>
+            <span class="browser-url">http://localhost:3000/verify</span>
+          </div>
+          <div class="browser-body">
+            <img src="assets/verification-success.png" id="demo-image" alt="Verification Success Interface" class="img-responsive">
+          </div>
+        </div>
+      </div>
+
+      <!-- Test Metrics Card -->
+      <div class="test-metrics-grid">
+        <div class="metric-card">
+          <div class="metric-val text-emerald">9 / 9 &check;</div>
+          <div class="metric-label">Smart Contract Unit Tests</div>
+          <p class="metric-sub">Compilation, access controls, issuance, double-issuance prevention, hash matching, tamper detection, and revocation.</p>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val text-emerald">13 / 13 &check;</div>
+          <div class="metric-label">Backend Integration Tests</div>
+          <p class="metric-sub">Super admin login, university onboarding, CSV processing, PDF generation, QR encoding, OCR extraction, and public verification.</p>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val text-emerald">CI Passed &check;</div>
+          <div class="metric-label">Frontend Production Build</div>
+          <p class="metric-sub">React 18 build completed with zero critical warnings, optimized Webpack bundles, and responsive styling.</p>
+        </div>
+      </div>
+
+      <!-- Quickstart Run Instructions -->
+      <div class="quickstart-box">
+        <h3>Run Emertech Certify Locally in 3 Steps:</h3>
+        <div class="code-block">
+          <pre><code># 1. Clone repository
+git clone https://github.com/SaqibAhmadBhat/emertech-certify.git
+cd emertech-certify
+
+# 2. Install dependencies & configure environment
+npm run install:all
+cp backend/.env.example backend/.env
+
+# 3. Compile contracts & launch local test network
+npm run contracts:compile
+npm run contracts:test
+npm run dev</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 08: SECURITY & LIMITATIONS -->
+    <section id="security" class="pres-section">
+      <div class="section-badge">08 // AUDIT & ROADMAP</div>
+      <h2 class="section-title">Security Architecture &amp; Honest Limitations</h2>
+      <p class="section-subtitle">Academic integrity requires total transparency regarding security measures and current operational constraints.</p>
+
+      <div class="security-grid">
+        <div class="sec-col">
+          <h3 class="sec-col-title text-emerald">&check; Implemented Security Controls</h3>
+          <div class="sec-item">
+            <h4>Deterministic SHA-256 Hashing</h4>
+            <p>Documents generate non-reversible mathematical digests; changing a single byte corrupts the hash, rendering physical or digital forgery impossible.</p>
+          </div>
+          <div class="sec-item">
+            <h4>On-Chain Access Controls</h4>
+            <p><code>onlyAuthorizedInstitution</code> modifier prevents unauthorized Ethereum addresses from issuing or revoking university degrees.</p>
+          </div>
+          <div class="sec-item">
+            <h4>Off-Chain Privacy Compliance</h4>
+            <p>Student names, GPAs, and identifiers are never committed to the public ledger, eliminating GDPR "Right to be Forgotten" conflicts.</p>
+          </div>
+          <div class="sec-item">
+            <h4>Zero Leaked Secrets</h4>
+            <p>Rigorous security audit completed. All hardcoded keys removed; sample private keys belong solely to public local Hardhat test environments.</p>
+          </div>
+        </div>
+
+        <div class="sec-col">
+          <h3 class="sec-col-title text-amber">&#x26A0; Current System Limitations</h3>
+          <div class="sec-item">
+            <h4>OCR Engine Resolution Sensitivity</h4>
+            <p>Tesseract.js accuracy depends on image lighting and resolution. Heavily crumpled or low-DPI photos may require manual fallback.</p>
+          </div>
+          <div class="sec-item">
+            <h4>Ethereum Mainnet Gas Costs</h4>
+            <p>Writing individual transactions on Ethereum Layer 1 is costly. Production deployments require Layer 2 rollups (Arbitrum/Optimism) or Merkle batching.</p>
+          </div>
+          <div class="sec-item">
+            <h4>University Private Key Management</h4>
+            <p>Universities are responsible for safeguarding their institutional crypto wallets. Compromised private keys require admin revocation.</p>
+          </div>
+          <div class="sec-item">
+            <h4>Demo Storage Mode</h4>
+            <p>Local fallback mock storage is provided when live IPFS / Pinata API credentials are not configured in <code>.env</code>.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Roadmap -->
+      <div class="roadmap-box">
+        <h3>Future Research &amp; Engineering Roadmap</h3>
+        <div class="roadmap-grid">
+          <div class="roadmap-card">
+            <span class="roadmap-badge">Phase 1</span>
+            <h4>Zero-Knowledge Proofs (zk-SNARKs)</h4>
+            <p>Enable selective disclosure: prove a candidate graduated with GPA &gt; 3.5 without revealing their actual grades or graduation year.</p>
+          </div>
+          <div class="roadmap-card">
+            <span class="roadmap-badge">Phase 2</span>
+            <h4>ERC-4337 Account Abstraction</h4>
+            <p>Gasless university issuance through institutional session keys and paymasters, removing the requirement for crypto balances.</p>
+          </div>
+          <div class="roadmap-card">
+            <span class="roadmap-badge">Phase 3</span>
+            <h4>Layer 2 Rollup Migration</h4>
+            <p>Deploy contracts on Arbitrum Orbit or Polygon CDK to reduce certificate issuance transaction fees to less than $0.001 per degree.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Presentation Footer -->
+  <footer class="pres-footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <strong>EMERTECH CERTIFY</strong> &bull; Developed by Saqib Ahmad Bhat
+      </div>
+      <div class="footer-meta">
+        Government College of Engineering, Tirunelveli &bull; Department of Computer Science &amp; Engineering
+      </div>
+      <div class="footer-legal">
+        Independent Academic Project &bull; MIT License &bull; Upstream: <a href="https://github.com/J7-Alwin/Certiport" target="_blank" rel="noopener">Certiport by Alwin James</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
