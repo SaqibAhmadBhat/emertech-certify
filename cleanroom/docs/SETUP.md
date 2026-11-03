@@ -15,7 +15,7 @@
 
 ## 2. Fast Setup (Zero Configuration)
 
-Emertech Certify includes an automated embedded database fallback and a built-in cryptographic simulation mode. No external database or blockchain software is required to test the full system.
+Emertech Certify includes an automated embedded database fallback (in-memory MongoDB) and an offline demonstration mode (`OFFCHAIN_DEMO`). For complete on-chain consensus, a local Hardhat EVM node or Ethereum testnet is used; if disconnected, the service records credentials off-chain with explicit diagnostic labels.
 
 ```bash
 # 1. Navigate to cleanroom directory

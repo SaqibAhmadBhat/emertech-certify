@@ -115,6 +115,7 @@ The following standard open-source dependencies are imported via npm and utilize
 ## 6. Provenance Conclusion
 
 Based on this reproducible empirical and architectural audit:
-- **Zero source code lines or proprietary algorithms from Certiport exist in the `cleanroom/` tree.**
+- **Zero proprietary algorithms, business logic, or functional implementations from Certiport exist in the `cleanroom/` tree.**
+- Overlaps detected by normalized line-block scanning occur exclusively in standard package manifests (package.json) and common framework boilerplate.
 - All architectural modules, contracts, services, controllers, React components, and stylesheets are verified as independently authored by Saqib Ahmad Bhat.
-- The `cleanroom/` codebase qualifies as an independent, clean-room software reengineering project.
+- **Formal Assessment**: The automated scan did not identify copied proprietary implementation blocks within the scope of the method used. This is an internal technical assessment and not legal certification.

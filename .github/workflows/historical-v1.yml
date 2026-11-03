@@ -61,3 +61,4 @@ jobs:
           cd frontend/certiport-frontend
           npm ci --legacy-peer-deps
           CI=true npm run build
+

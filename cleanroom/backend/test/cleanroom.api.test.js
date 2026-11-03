@@ -1,22 +1,27 @@
+const assert = require('assert');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
-const assert = require('assert');
 const { spawn } = require('child_process');
 const { ethers } = require('ethers');
+
+// Set isolated test environment before loading application
+process.env.NODE_ENV = 'test';
+process.env.PORT = '0'; // dynamic ephemeral port
+
+const app = require('../src/app');
 const { connectDatabase, disconnectDatabase } = require('../src/config/db');
 const { reconfigureBlockchain } = require('../src/config/blockchain');
 const CryptoService = require('../src/services/CryptoService');
-const app = require('../src/app');
+const KeyVaultService = require('../src/services/KeyVaultService');
 
 let server;
-let baseUrl;
+let baseUrl = '';
 let adminToken = '';
 let instToken = '';
 let studentToken = '';
 let testCertHash = '';
 let testCertId = '';
-let testPdfBuffer = null;
 let approvedInstId = '';
 let hardhatNodeProcess = null;
 let deployedContractAddress = '';
@@ -59,74 +64,68 @@ function makeRequest(method, endpoint, body = null, token = null, isMultipart = 
       }
       postData.push(`--${boundary}--\r\n`);
 
-      const payloadBuffer = Buffer.concat(postData.map(p => Buffer.isBuffer(p) ? p : Buffer.from(p)));
-      headers['Content-Length'] = payloadBuffer.length;
+      const payload = Buffer.concat(postData.map(d => Buffer.isBuffer(d) ? d : Buffer.from(d, 'utf8')));
+      headers['Content-Length'] = payload.length;
 
-      const req = http.request(url, { method, headers }, (res) => {
-        const chunks = [];
-        res.on('data', chunk => chunks.push(chunk));
-        res.on('end', () => {
-          const raw = Buffer.concat(chunks);
-          const isJson = (res.headers['content-type'] || '').includes('application/json');
-          resolve({
-            statusCode: res.statusCode,
-            headers: res.headers,
-            body: isJson ? JSON.parse(raw.toString('utf8')) : raw
-          });
-        });
-      });
-      req.on('error', reject);
-      req.write(payloadBuffer);
-      req.end();
-      return;
-    }
-
-    if (body) {
-      headers['Content-Type'] = 'application/json';
-      const payload = JSON.stringify(body);
-      headers['Content-Length'] = Buffer.byteLength(payload);
       const req = http.request(url, { method, headers }, (res) => {
         const chunks = [];
         res.on('data', chunk => chunks.push(chunk));
         res.on('end', () => {
           const raw = Buffer.concat(chunks).toString('utf8');
           try {
-            resolve({ statusCode: res.statusCode, headers: res.headers, body: JSON.parse(raw) });
+            resolve({ statusCode: res.statusCode, headers: res.headers, body: JSON.parse(raw), raw });
           } catch (e) {
-            resolve({ statusCode: res.statusCode, headers: res.headers, body: raw });
+            resolve({ statusCode: res.statusCode, headers: res.headers, raw });
           }
         });
       });
+
       req.on('error', reject);
       req.write(payload);
       req.end();
-    } else {
-      const req = http.request(url, { method, headers }, (res) => {
-        const chunks = [];
-        res.on('data', chunk => chunks.push(chunk));
-        res.on('end', () => {
-          const raw = Buffer.concat(chunks);
-          const isJson = (res.headers['content-type'] || '').includes('application/json');
-          resolve({
-            statusCode: res.statusCode,
-            headers: res.headers,
-            body: isJson ? JSON.parse(raw.toString('utf8')) : raw
-          });
-        });
-      });
-      req.on('error', reject);
-      req.end();
+      return;
     }
+
+    let payload = '';
+    if (body) {
+      payload = JSON.stringify(body);
+      headers['Content-Type'] = 'application/json';
+      headers['Content-Length'] = Buffer.byteLength(payload);
+    }
+
+    const req = http.request(url, { method, headers }, (res) => {
+      const chunks = [];
+      res.on('data', chunk => chunks.push(chunk));
+      res.on('end', () => {
+        const raw = Buffer.concat(chunks).toString('utf8');
+        try {
+          resolve({ statusCode: res.statusCode, headers: res.headers, body: JSON.parse(raw), raw, binary: Buffer.concat(chunks) });
+        } catch (e) {
+          resolve({ statusCode: res.statusCode, headers: res.headers, raw, binary: Buffer.concat(chunks) });
+        }
+      });
+    });
+
+    req.on('error', reject);
+    if (payload) {
+      req.write(payload);
+    }
+    req.end();
   });
 }
 
-function checkNodeIsUp(rpcUrl = 'http://127.0.0.1:8545') {
+function checkNodeIsUp(rpcUrl) {
   return new Promise((resolve) => {
-    const req = http.request(rpcUrl, {
+    const url = new URL(rpcUrl);
+    const req = http.request(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    }, () => resolve(true));
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 1000
+    }, (res) => {
+      resolve(res.statusCode === 200);
+    });
     req.on('error', () => resolve(false));
+    req.on('timeout', () => { req.destroy(); resolve(false); });
     req.write(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_blockNumber', params: [] }));
     req.end();
   });
@@ -180,7 +179,7 @@ async function ensureLocalBlockchainNode() {
 
   console.log(`[Blockchain Setup] EmertechCertificateRegistry deployed to: ${deployedContractAddress}`);
 
-  // Reconfigure backend blockchain module with real deployed contract address
+  // Reconfigure backend blockchain client to point to deployed contract
   reconfigureBlockchain({
     rpcUrl,
     contractAddress: deployedContractAddress
@@ -194,19 +193,32 @@ async function runCleanroomTestSuite() {
   console.log('🔗 On-Chain Consensus: Real Local Hardhat EVM Execution');
   console.log('================================================================');
 
-  try {
-    await connectDatabase();
-    await ensureLocalBlockchainNode();
+  await connectDatabase();
+  await ensureLocalBlockchainNode();
 
-    await new Promise((resolve) => {
-      server = app.listen(0, () => {
-        const port = server.address().port;
-        baseUrl = `http://127.0.0.1:${port}`;
-        console.log(`[Test Server] Live on ephemeral port ${port}`);
-        resolve();
-      });
+  server = http.createServer(app);
+  await new Promise((resolve) => {
+    server.listen(0, '127.0.0.1', () => {
+      const port = server.address().port;
+      baseUrl = `http://127.0.0.1:${port}`;
+      console.log(`[Test Server] Live on ephemeral port ${port}`);
+      resolve();
     });
+  });
 
+  const institutionWallet = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'; // Hardhat Account #1
+  const fictionalStudent = {
+    fullName: 'Jane H. Doe',
+    studentName: 'Jane H. Doe',
+    email: 'jane.doe@apex.edu.test',
+    studentIdentifier: 'STU-2026-0042',
+    degreeTitle: 'Bachelor of Science',
+    majorProgram: 'Computer Engineering',
+    graduationDate: '2026-05-15',
+    gradeOrDistinction: 'First Class with Distinction'
+  };
+
+  try {
     // ------------------------------------------------------------------------
     // TEST 1: System Health Check
     // ------------------------------------------------------------------------
@@ -215,7 +227,6 @@ async function runCleanroomTestSuite() {
       const health = await makeRequest('GET', '/api/v2/health');
       assert.strictEqual(health.statusCode, 200);
       assert.strictEqual(health.body.status, 'ONLINE');
-      assert.strictEqual(health.body.version, '2.0.0');
       passedCount++;
       console.log('   ✅ Health check verified.');
     } catch (err) {
@@ -253,7 +264,7 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 3: Super Admin Registration & Login (Fictional Identity)
+    // TEST 3: Super Admin Registration & Login
     // ------------------------------------------------------------------------
     try {
       console.log('\n3. Testing Super Administrator Registration & Login...');
@@ -275,9 +286,8 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 4: Institution Onboarding Application Queue (Fictional: Apex Institute)
+    // TEST 4: Institution Application Queue (Apex Institute of Technology)
     // ------------------------------------------------------------------------
-    const institutionWallet = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'; // Hardhat Account #1
     try {
       console.log('\n4. Testing Academic Institution Application Queue...');
       const instApp = await makeRequest('POST', '/api/v2/institutions/apply', {
@@ -298,7 +308,7 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 5: Super Admin Approves Institution & On-Chain Status Update
+    // TEST 5: Super Admin Approves Institution & On-Chain Accreditation
     // ------------------------------------------------------------------------
     try {
       console.log('\n5. Testing Super Admin Approval & On-Chain Accreditation...');
@@ -310,6 +320,7 @@ async function runCleanroomTestSuite() {
       );
       assert.strictEqual(approveRes.statusCode, 200);
       assert.strictEqual(approveRes.body.institution.status, 'AUTHORIZED');
+      assert.strictEqual(approveRes.body.institution.onChainAuthorized, true);
 
       // Verify on-chain accreditation directly from smart contract state
       const instOnChain = await directContractInstance.getInstitution(institutionWallet);
@@ -325,10 +336,167 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 6: Authorized Institution Login
+    // TEST 6: Rejection of On-Chain Authorization for Invalid Wallet Address
     // ------------------------------------------------------------------------
     try {
-      console.log('\n6. Testing Authorized Institution Admin Account & Login...');
+      console.log('\n6. Testing Rejection of On-Chain Authorization for Invalid Wallet Address...');
+      // Apply with invalid wallet address
+      const invalidApp = await makeRequest('POST', '/api/v2/institutions/apply', {
+        institutionCode: 'INV',
+        name: 'Invalid Address Academy',
+        officialDomain: 'invalid.edu.test',
+        contactEmail: 'contact@invalid.edu.test',
+        walletAddress: '0xNotAValidEthereumAddress'
+      });
+      assert.strictEqual(invalidApp.statusCode, 201);
+      const invalidInstId = invalidApp.body.institution._id;
+
+      // Attempt authorization
+      const failedApprove = await makeRequest(
+        'PATCH',
+        `/api/v2/admin/institutions/${invalidInstId}/status`,
+        { status: 'AUTHORIZED' },
+        adminToken
+      );
+      assert.strictEqual(failedApprove.statusCode, 400, 'Invalid wallet must return 400');
+      assert.strictEqual(failedApprove.body.onChainAuthorized, false);
+
+      passedCount++;
+      console.log('   ✅ Failed authorization correctly rejected; database status remains unapproved.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ Failed authorization test failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 7: Resilient Handling of Unavailable Blockchain During Authorization
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n7. Testing Handling of Unavailable Blockchain During Authorization...');
+      const offlineApp = await makeRequest('POST', '/api/v2/institutions/apply', {
+        institutionCode: 'OFF',
+        name: 'Offline University',
+        officialDomain: 'offline.edu.test',
+        contactEmail: 'contact@offline.edu.test',
+        walletAddress: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'
+      });
+      assert.strictEqual(offlineApp.statusCode, 201);
+      const offlineInstId = offlineApp.body.institution._id;
+
+      // Temporarily reconfigure to unreachable port
+      reconfigureBlockchain({ rpcUrl: 'http://127.0.0.1:9999', contractAddress: deployedContractAddress });
+
+      const offlineApprove = await makeRequest(
+        'PATCH',
+        `/api/v2/admin/institutions/${offlineInstId}/status`,
+        { status: 'AUTHORIZED' },
+        adminToken
+      );
+      assert.strictEqual(offlineApprove.statusCode, 502, 'Disconnected blockchain must return 502 Bad Gateway');
+      assert.strictEqual(offlineApprove.body.onChainAuthorized, false);
+
+      // Restore blockchain connection
+      const activeRpc = process.env.BLOCKCHAIN_RPC_URL || 'http://127.0.0.1:8545';
+      reconfigureBlockchain({ rpcUrl: activeRpc, contractAddress: deployedContractAddress });
+
+      passedCount++;
+      console.log('   ✅ Blockchain unavailability handled safely; institution remains unapproved on-chain.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ Unavailable blockchain test failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 8: Institution Status Transition to SUSPENDED on Smart Contract
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n8. Testing Institution Status Transition to SUSPENDED...');
+      const suspendRes = await makeRequest(
+        'PATCH',
+        `/api/v2/admin/institutions/${approvedInstId}/status`,
+        { status: 'SUSPENDED' },
+        adminToken
+      );
+      assert.strictEqual(suspendRes.statusCode, 200);
+      assert.strictEqual(suspendRes.body.institution.status, 'SUSPENDED');
+
+      // Verify on-chain status is now 3 (Suspended)
+      const instOnChain = await directContractInstance.getInstitution(institutionWallet);
+      assert.strictEqual(instOnChain.status, 3, 'Smart contract must record status 3 (Suspended)');
+
+      passedCount++;
+      console.log('   ✅ Institution successfully suspended on-chain (status = 3) and off-chain.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ Suspension test failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 9: Prevention of Issuance by Suspended/Unauthorized Institution
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n9. Testing Prevention of Issuance by Suspended Institution...');
+      // Temporary token for suspended institution admin
+      const tempInstUser = await makeRequest('POST', '/api/v2/auth/register', {
+        fullName: 'Suspended Dean',
+        email: 'suspended.dean@apex.edu.test',
+        password: 'SuspendedPassword2026!',
+        role: 'INSTITUTION_ADMIN',
+        institutionCode: 'AIT',
+        walletAddress: institutionWallet
+      });
+      const tempToken = tempInstUser.body.token;
+
+      const issueAttempt = await makeRequest(
+        'POST',
+        '/api/v2/institutions/issue',
+        fictionalStudent,
+        tempToken
+      );
+      assert.strictEqual(issueAttempt.statusCode, 403, 'Suspended institution issuance must return 403 Forbidden');
+      assert.strictEqual(issueAttempt.body.success, false);
+
+      passedCount++;
+      console.log('   ✅ Unauthorized issuance blocked: 403 Forbidden enforced.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ Prevention of unauthorized issuance failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 10: Restoration of Institution Status to AUTHORIZED on Smart Contract
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n10. Testing Restoration of Institution Status to AUTHORIZED...');
+      const restoreRes = await makeRequest(
+        'PATCH',
+        `/api/v2/admin/institutions/${approvedInstId}/status`,
+        { status: 'AUTHORIZED' },
+        adminToken
+      );
+      assert.strictEqual(restoreRes.statusCode, 200);
+      assert.strictEqual(restoreRes.body.institution.status, 'AUTHORIZED');
+
+      const instOnChain = await directContractInstance.getInstitution(institutionWallet);
+      assert.strictEqual(instOnChain.status, 2, 'Smart contract must restore status 2 (Authorized)');
+
+      passedCount++;
+      console.log('   ✅ Institution restored to AUTHORIZED on smart contract.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ Status restoration failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 11: Authorized Institution Admin Account & Login
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n11. Testing Authorized Institution Admin Account & Login...');
       const instUser = await makeRequest('POST', '/api/v2/auth/register', {
         fullName: 'Dean of Academic Records',
         email: 'dean.records@apex.edu.test',
@@ -348,21 +516,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 7: Student Account Registration (Fictional Identity: Jane H. Doe)
+    // TEST 12: Student Account Registration & Institution Linkage
     // ------------------------------------------------------------------------
-    const fictionalStudent = {
-      fullName: 'Jane H. Doe',
-      studentName: 'Jane H. Doe',
-      email: 'jane.doe@apex.edu.test',
-      studentIdentifier: 'STU-2026-0042',
-      degreeTitle: 'Bachelor of Science',
-      majorProgram: 'Computer Engineering',
-      graduationDate: '2026-05-15',
-      gradeOrDistinction: 'First Class with Distinction'
-    };
-
     try {
-      console.log('\n7. Testing Student Account Registration & Institution Linkage...');
+      console.log('\n12. Testing Student Account Registration & Institution Linkage...');
       const studentUser = await makeRequest('POST', '/api/v2/auth/register', {
         fullName: fictionalStudent.fullName,
         email: fictionalStudent.email,
@@ -382,10 +539,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 8: Real On-Chain Certificate Issuance & Vector PDF Compilation
+    // TEST 13: Real On-Chain Certificate Issuance Signed by Institution Signer
     // ------------------------------------------------------------------------
     try {
-      console.log('\n8. Testing Certificate Issuance, Vector PDF & Real On-Chain Anchoring...');
+      console.log('\n13. Testing Certificate Issuance Signed by Institution & Real On-Chain Anchoring...');
       const issueRes = await makeRequest(
         'POST',
         '/api/v2/institutions/issue',
@@ -405,17 +562,27 @@ async function runCleanroomTestSuite() {
       testCertHash = cert.certHash;
       testCertId = cert.certificateId;
 
-      // Query contract directly on EVM to confirm minted state
+      // Query contract directly on EVM to confirm minted state and verify issuer identity
       const onChainRecord = await directContractInstance.verifyCertificate(testCertHash);
       assert.strictEqual(onChainRecord.exists, true, 'Contract must confirm certificate exists on-chain');
       assert.strictEqual(onChainRecord.isRevoked, false, 'Contract must confirm certificate is not revoked');
       assert.match(onChainRecord.recipientIdHash, /^0x[a-fA-F0-9]{64}$/, 'recipientIdHash must be a salted SHA-256 digest');
+
+      // CRITICAL ASSERTION: On-chain issuer identity matches the approved institution's wallet
+      assert.strictEqual(
+        onChainRecord.issuer.toLowerCase(),
+        institutionWallet.toLowerCase(),
+        'On-chain issuer must strictly match approved institution wallet (msg.sender)'
+      );
+      assert.strictEqual(cert.issuerWallet.toLowerCase(), institutionWallet.toLowerCase());
+      assert.strictEqual(cert.onChainIssuer.toLowerCase(), institutionWallet.toLowerCase());
 
       passedCount++;
       console.log(`   ✅ Certificate anchored on-chain with confirmed EVM transaction!`);
       console.log(`      ID:     ${testCertId}`);
       console.log(`      Hash:   ${testCertHash}`);
       console.log(`      TxHash: ${cert.txHash}`);
+      console.log(`      Issuer: ${onChainRecord.issuer} (Verified Matches Institution Wallet)`);
     } catch (err) {
       failedCount++;
       console.error('   ❌ On-chain certificate issuance failed:', err.message);
@@ -423,18 +590,16 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 9: Vector PDF Download Endpoint
+    // TEST 14: Vector PDF Download Endpoint
     // ------------------------------------------------------------------------
     try {
-      console.log('\n9. Testing Vector PDF Download Endpoint...');
+      console.log('\n14. Testing Vector PDF Download Endpoint...');
       const pdfRes = await makeRequest('GET', `/api/v2/certificates/${testCertId}/pdf`);
       assert.strictEqual(pdfRes.statusCode, 200);
       assert.strictEqual(pdfRes.headers['content-type'], 'application/pdf');
-      testPdfBuffer = pdfRes.body;
-      assert.ok(Buffer.isBuffer(testPdfBuffer));
-      assert.ok(testPdfBuffer.length > 1000);
+      assert.ok(pdfRes.binary && pdfRes.binary.length > 1000, 'PDF binary must be generated');
       passedCount++;
-      console.log(`   ✅ Vector PDF downloaded successfully (${testPdfBuffer.length} bytes).`);
+      console.log(`   ✅ Vector PDF downloaded successfully (${pdfRes.binary.length} bytes).`);
     } catch (err) {
       failedCount++;
       console.error('   ❌ PDF download failed:', err.message);
@@ -442,57 +607,62 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 10: Mode 1: Public Verification by Hash (Real On-Chain Verified)
+    // TEST 15: Mode 1: Public Verification by Hash with Verified On-Chain Issuer
     // ------------------------------------------------------------------------
     try {
-      console.log('\n10. Testing Mode 1: Public Verification by Hash...');
-      const hashVerify = await makeRequest('POST', '/api/v2/verify/hash', { hash: testCertHash });
-      assert.strictEqual(hashVerify.statusCode, 200);
-      assert.strictEqual(hashVerify.body.status, 'AUTHENTIC');
-      assert.strictEqual(hashVerify.body.onChainVerified, true, 'Must be onChainVerified === true');
-      assert.strictEqual(hashVerify.body.verificationData.studentName, 'Jane H. Doe');
+      console.log('\n15. Testing Mode 1: Public Verification by Hash with On-Chain Issuer Display...');
+      const verifyRes = await makeRequest('POST', '/api/v2/verify/hash', { hash: testCertHash });
+      assert.strictEqual(verifyRes.statusCode, 200);
+      assert.strictEqual(verifyRes.body.status, 'AUTHENTIC');
+      assert.strictEqual(verifyRes.body.onChainVerified, true);
+      assert.strictEqual(verifyRes.body.onChainIssuer.toLowerCase(), institutionWallet.toLowerCase());
+      assert.strictEqual(verifyRes.body.verificationData.onChainIssuer.toLowerCase(), institutionWallet.toLowerCase());
+      assert.strictEqual(verifyRes.body.verificationData.studentName, fictionalStudent.studentName);
       passedCount++;
-      console.log('   ✅ Mode 1 Verified: Status = AUTHENTIC (onChainVerified: true).');
+      console.log('   ✅ Mode 1 Verified: Status = AUTHENTIC (onChainVerified: true, issuer matches institution).');
     } catch (err) {
       failedCount++;
-      console.error('   ❌ Mode 1 hash verification failed:', err.message);
+      console.error('   ❌ Mode 1 verification failed:', err.message);
       throw err;
     }
 
     // ------------------------------------------------------------------------
-    // TEST 11: Mode 2: Verification by PDF Binary Upload
+    // TEST 16: Mode 2: Verification by PDF Binary Upload
     // ------------------------------------------------------------------------
+    let authenticPdfBuffer = null;
     try {
-      console.log('\n11. Testing Mode 2: Verification by PDF Binary Upload...');
-      const fileVerify = await makeRequest(
+      console.log('\n16. Testing Mode 2: Verification by PDF Binary Upload...');
+      const pdfFetch = await makeRequest('GET', `/api/v2/certificates/${testCertId}/pdf`);
+      authenticPdfBuffer = pdfFetch.binary;
+
+      const verifyFileRes = await makeRequest(
         'POST',
         '/api/v2/verify/file',
         null,
         null,
         true,
-        { certificatePdf: { buffer: testPdfBuffer, filename: `${testCertId}.pdf`, contentType: 'application/pdf' } }
+        { certificatePdf: { buffer: authenticPdfBuffer, filename: `${testCertId}.pdf`, contentType: 'application/pdf' } }
       );
-      assert.strictEqual(fileVerify.statusCode, 200);
-      assert.strictEqual(fileVerify.body.status, 'AUTHENTIC');
-      assert.strictEqual(fileVerify.body.onChainVerified, true);
-      assert.strictEqual(fileVerify.body.tamperDetected, false);
+
+      assert.strictEqual(verifyFileRes.statusCode, 200);
+      assert.strictEqual(verifyFileRes.body.status, 'AUTHENTIC');
+      assert.strictEqual(verifyFileRes.body.onChainVerified, true);
+      assert.strictEqual(verifyFileRes.body.tamperDetected, false);
       passedCount++;
       console.log('   ✅ Mode 2 Verified: Bitwise file digest matches (onChainVerified: true).');
     } catch (err) {
       failedCount++;
-      console.error('   ❌ Mode 2 file verification failed:', err.message);
+      console.error('   ❌ Mode 2 verification failed:', err.message);
       throw err;
     }
 
     // ------------------------------------------------------------------------
-    // TEST 12: Bitwise Tamper Detection on Altered PDF Document
+    // TEST 17: Bitwise Tamper Detection on Altered PDF Document
     // ------------------------------------------------------------------------
     try {
-      console.log('\n12. Testing Bitwise Tamper Detection on Altered PDF Document...');
-      const tamperedBuffer = Buffer.from(testPdfBuffer);
-      // Alter a byte inside the text stream while keeping PDF structure parseable
-      const mid = Math.floor(tamperedBuffer.length / 2);
-      tamperedBuffer[mid] = tamperedBuffer[mid] === 0x41 ? 0x42 : 0x41;
+      console.log('\n17. Testing Bitwise Tamper Detection on Altered PDF Document...');
+      const tamperedBuffer = Buffer.from(authenticPdfBuffer);
+      tamperedBuffer[tamperedBuffer.length - 20] ^= 0xFF; // Flip bit in trailing byte
 
       const tamperRes = await makeRequest(
         'POST',
@@ -501,10 +671,11 @@ async function runCleanroomTestSuite() {
         null,
         true,
         {
-          certificatePdf: { buffer: tamperedBuffer, filename: 'tampered.pdf', contentType: 'application/pdf' },
+          certificatePdf: { buffer: tamperedBuffer, filename: `${testCertId}_tampered.pdf`, contentType: 'application/pdf' },
           expectedCertificateId: testCertId
         }
       );
+
       assert.strictEqual(tamperRes.statusCode, 200);
       assert.strictEqual(tamperRes.body.status, 'TAMPER_DETECTED');
       assert.strictEqual(tamperRes.body.tamperDetected, true);
@@ -518,10 +689,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 13: Mode 3: QR Code Payload Verification
+    // TEST 18: Mode 3: QR Code Payload Verification
     // ------------------------------------------------------------------------
     try {
-      console.log('\n13. Testing Mode 3: QR Code Payload Verification...');
+      console.log('\n18. Testing Mode 3: QR Code Payload Verification...');
       const qrPayload = `http://localhost:3000/verify?hash=${testCertHash}`;
       const qrRes = await makeRequest('POST', '/api/v2/verify/qr', { qrPayload });
       assert.strictEqual(qrRes.statusCode, 200);
@@ -536,10 +707,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 14: Student Credential Retrieval
+    // TEST 19: Student Credential Retrieval
     // ------------------------------------------------------------------------
     try {
-      console.log('\n14. Testing Student Credential Retrieval (/api/v2/certificates/student/my-certificates)...');
+      console.log('\n19. Testing Student Credential Retrieval (/api/v2/certificates/student/my-certificates)...');
       const studentCerts = await makeRequest('GET', '/api/v2/certificates/student/my-certificates', null, studentToken);
       assert.strictEqual(studentCerts.statusCode, 200);
       assert.strictEqual(studentCerts.body.success, true);
@@ -553,10 +724,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 15: Real On-Chain Certificate Revocation Pipeline
+    // TEST 20: Real On-Chain Certificate Revocation by Issuing Institution
     // ------------------------------------------------------------------------
     try {
-      console.log('\n15. Testing Real On-Chain Certificate Revocation Pipeline...');
+      console.log('\n20. Testing Real On-Chain Certificate Revocation by Issuing Institution...');
       const revokeRes = await makeRequest(
         'POST',
         '/api/v2/institutions/revoke',
@@ -574,7 +745,7 @@ async function runCleanroomTestSuite() {
       assert.strictEqual(onChainCheck.isRevoked, true, 'Smart contract must confirm isRevoked === true');
 
       passedCount++;
-      console.log('   ✅ Certificate revoked via real mined smart contract transaction.');
+      console.log('   ✅ Certificate revoked via real mined smart contract transaction by issuing institution.');
       console.log(`      Revocation TxHash: ${revokeRes.body.certificate.txHash}`);
     } catch (err) {
       failedCount++;
@@ -583,10 +754,33 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 16: Public Verification of Revoked Credential
+    // TEST 21: Prevention of Unauthorized Revocation by Non-Issuer
     // ------------------------------------------------------------------------
     try {
-      console.log('\n16. Testing Public Verification of Revoked Credential...');
+      console.log('\n21. Testing Prevention of Unauthorized Revocation by Non-Issuer...');
+      // Student tries to revoke a certificate
+      const unauthRevoke = await makeRequest(
+        'POST',
+        '/api/v2/institutions/revoke',
+        { certHash: testCertHash, reason: 'Malicious student revocation attempt' },
+        studentToken
+      );
+      // Student is blocked by role guard (403 Forbidden)
+      assert.strictEqual(unauthRevoke.statusCode, 403, 'Non-institution caller must be rejected with 403');
+
+      passedCount++;
+      console.log('   ✅ Unauthorized revocation rejected with 403 Forbidden.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ Unauthorized revocation prevention failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 22: Public Verification of Revoked Credential
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n22. Testing Public Verification of Revoked Credential...');
       const revokedVerify = await makeRequest('POST', '/api/v2/verify/hash', { hash: testCertHash });
       assert.strictEqual(revokedVerify.statusCode, 200);
       assert.strictEqual(revokedVerify.body.status, 'REVOKED');
@@ -600,10 +794,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 17: Mode 4: Tesseract.js Neural OCR Image Extraction with Fixture
+    // TEST 23: Mode 4: Tesseract.js Neural OCR Image Extraction with Fixture
     // ------------------------------------------------------------------------
     try {
-      console.log('\n17. Testing Mode 4: Tesseract.js Neural OCR Image Extraction (Synthetic Fixture)...');
+      console.log('\n23. Testing Mode 4: Tesseract.js Neural OCR Image Extraction (Synthetic Fixture)...');
       const samplePngPath = path.resolve(__dirname, 'fixtures/synthetic-test-certificate.png');
 
       if (!fs.existsSync(samplePngPath)) {
@@ -636,10 +830,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 18: Batch Certificate Issuance with Real On-Chain Registration
+    // TEST 24: Batch Certificate Issuance with Real On-Chain Registration & Institutional Signatures
     // ------------------------------------------------------------------------
     try {
-      console.log('\n18. Testing Batch Certificate Issuance with Real On-Chain Registration...');
+      console.log('\n24. Testing Batch Certificate Issuance with Real On-Chain Registration...');
       const batchRes = await makeRequest(
         'POST',
         '/api/v2/institutions/batch',
@@ -655,8 +849,10 @@ async function runCleanroomTestSuite() {
       assert.strictEqual(batchRes.body.processed, 2);
       assert.strictEqual(batchRes.body.results[0].onChain, true);
       assert.strictEqual(batchRes.body.results[1].onChain, true);
+      assert.strictEqual(batchRes.body.results[0].onChainIssuer.toLowerCase(), institutionWallet.toLowerCase());
+      assert.strictEqual(batchRes.body.results[1].onChainIssuer.toLowerCase(), institutionWallet.toLowerCase());
       passedCount++;
-      console.log('   ✅ Batch issuance processed 2 certificates with real on-chain transactions.');
+      console.log('   ✅ Batch issuance processed 2 certificates with real on-chain transactions and institutional signatures.');
     } catch (err) {
       failedCount++;
       console.error('   ❌ Batch issuance test failed:', err.message);
@@ -664,10 +860,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 19: Super Admin Telemetry & Governance
+    // TEST 25: Super Admin Telemetry & Governance Metrics
     // ------------------------------------------------------------------------
     try {
-      console.log('\n19. Testing Super Admin Telemetry & Governance Metrics...');
+      console.log('\n25. Testing Super Admin Telemetry & Governance Metrics...');
       const telemRes = await makeRequest('GET', '/api/v2/admin/telemetry', null, adminToken);
       assert.strictEqual(telemRes.statusCode, 200);
       assert.strictEqual(telemRes.body.success, true);

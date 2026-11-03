@@ -1,25 +1,41 @@
 const { getBlockchainContext } = require('../config/blockchain');
+const KeyVaultService = require('./KeyVaultService');
 
 class BlockchainService {
   /**
    * Registers a certificate hash on the smart contract.
+   * Signs with the institution's authorized signer when issuerWalletAddress is provided.
    * Requires:
    *  - Connected JSON-RPC provider and authorized signer.
    *  - Mined transaction confirmation.
-   *  - Verification of state on the contract.
+   *  - Verification that on-chain issuer matches the authorized institution.
    */
-  static async registerCertificate(certHash, recipientIdHash = '', metadataURI = '') {
-    const { contract, signer } = getBlockchainContext();
-    if (!contract || !signer) {
+  static async registerCertificate(certHash, recipientIdHash = '', metadataURI = '', issuerWalletAddress = null) {
+    const { contract, signer: defaultSigner, provider } = getBlockchainContext();
+    if (!contract || !provider) {
       return {
         txHash: null,
         onChain: false,
-        error: 'Blockchain smart contract or signer wallet is not connected.'
+        error: 'Blockchain smart contract or provider is not connected.'
       };
     }
 
     try {
-      const tx = await contract.registerCertificate(
+      let activeSigner = defaultSigner;
+      if (issuerWalletAddress) {
+        activeSigner = await KeyVaultService.getSigner(issuerWalletAddress, provider);
+      }
+
+      if (!activeSigner) {
+        return {
+          txHash: null,
+          onChain: false,
+          error: `No valid transaction signer resolved for issuer wallet: ${issuerWalletAddress}`
+        };
+      }
+
+      const boundContract = contract.connect(activeSigner);
+      const tx = await boundContract.registerCertificate(
         certHash,
         recipientIdHash,
         metadataURI,
@@ -45,10 +61,20 @@ class BlockchainService {
         };
       }
 
+      const expectedIssuer = (issuerWalletAddress || (await activeSigner.getAddress())).toLowerCase();
+      if (stateCheck.issuer.toLowerCase() !== expectedIssuer) {
+        return {
+          txHash: receipt.transactionHash,
+          onChain: false,
+          error: `On-chain issuer mismatch: expected ${expectedIssuer}, recorded ${stateCheck.issuer}`
+        };
+      }
+
       return {
         txHash: receipt.transactionHash,
         blockNumber: receipt.blockNumber,
-        onChain: true
+        onChain: true,
+        onChainIssuer: stateCheck.issuer
       };
     } catch (err) {
       return {
@@ -61,20 +87,34 @@ class BlockchainService {
 
   /**
    * Revokes a certificate hash on-chain.
-   * Requires mined transaction receipt and confirmed on-chain revocation state.
+   * Signed by the issuing institution's wallet or authorized emergency contract owner.
    */
-  static async revokeCertificate(certHash, reason = 'Administrative revocation') {
-    const { contract, signer } = getBlockchainContext();
-    if (!contract || !signer) {
+  static async revokeCertificate(certHash, reason = 'Administrative revocation', revokerWalletAddress = null) {
+    const { contract, signer: defaultSigner, provider } = getBlockchainContext();
+    if (!contract || !provider) {
       return {
         txHash: null,
         onChain: false,
-        error: 'Blockchain smart contract or signer wallet is not connected.'
+        error: 'Blockchain smart contract or provider is not connected.'
       };
     }
 
     try {
-      const tx = await contract.revokeCertificate(certHash, reason, { gasLimit: 250000 });
+      let activeSigner = defaultSigner;
+      if (revokerWalletAddress) {
+        activeSigner = await KeyVaultService.getSigner(revokerWalletAddress, provider);
+      }
+
+      if (!activeSigner) {
+        return {
+          txHash: null,
+          onChain: false,
+          error: `No valid transaction signer resolved for revoker wallet: ${revokerWalletAddress}`
+        };
+      }
+
+      const boundContract = contract.connect(activeSigner);
+      const tx = await boundContract.revokeCertificate(certHash, reason, { gasLimit: 250000 });
       const receipt = await tx.wait(1);
 
       if (receipt.status !== 1) {
@@ -97,7 +137,8 @@ class BlockchainService {
       return {
         txHash: receipt.transactionHash,
         blockNumber: receipt.blockNumber,
-        onChain: true
+        onChain: true,
+        revoker: await activeSigner.getAddress()
       };
     } catch (err) {
       return {
@@ -145,7 +186,7 @@ class BlockchainService {
   }
 
   /**
-   * Authorizes an academic institution on-chain via root contract owner.
+   * Authorizes an academic institution on-chain via root contract owner (Status: 2 = Authorized).
    */
   static async authorizeInstitution(walletAddress, name, domain) {
     const { contract, signer } = getBlockchainContext();
@@ -153,17 +194,37 @@ class BlockchainService {
       return {
         txHash: null,
         onChain: false,
-        error: 'Blockchain smart contract or signer wallet is not connected.'
+        error: 'Blockchain smart contract or root signer wallet is not connected.'
       };
     }
 
     try {
-      const tx = await contract.setInstitutionStatus(walletAddress, name, domain, 2); // 2 = Authorized
+      const tx = await contract.setInstitutionStatus(walletAddress, name, domain, 2, { gasLimit: 250000 });
       const receipt = await tx.wait(1);
+
+      if (receipt.status !== 1) {
+        return {
+          txHash: receipt.transactionHash,
+          onChain: false,
+          error: 'Transaction reverted during on-chain institution authorization.'
+        };
+      }
+
+      // Verify contract state immediately
+      const instRecord = await contract.getInstitution(walletAddress);
+      if (instRecord.status !== 2) {
+        return {
+          txHash: receipt.transactionHash,
+          onChain: false,
+          error: `Post-mining verification failed: on-chain status is ${instRecord.status}, expected 2 (Authorized).`
+        };
+      }
+
       return {
         txHash: receipt.transactionHash,
         blockNumber: receipt.blockNumber,
-        onChain: receipt.status === 1
+        onChain: true,
+        status: 2
       };
     } catch (err) {
       return {
@@ -171,6 +232,94 @@ class BlockchainService {
         onChain: false,
         error: err.message
       };
+    }
+  }
+
+  /**
+   * Suspends an academic institution on-chain via root contract owner (Status: 3 = Suspended).
+   */
+  static async suspendInstitution(walletAddress, name, domain) {
+    const { contract, signer } = getBlockchainContext();
+    if (!contract || !signer) {
+      return {
+        txHash: null,
+        onChain: false,
+        error: 'Blockchain smart contract or root signer wallet is not connected.'
+      };
+    }
+
+    try {
+      const tx = await contract.setInstitutionStatus(walletAddress, name, domain, 3, { gasLimit: 250000 });
+      const receipt = await tx.wait(1);
+
+      const instRecord = await contract.getInstitution(walletAddress);
+      return {
+        txHash: receipt.transactionHash,
+        blockNumber: receipt.blockNumber,
+        onChain: receipt.status === 1 && instRecord.status === 3,
+        status: 3
+      };
+    } catch (err) {
+      return {
+        txHash: null,
+        onChain: false,
+        error: err.message
+      };
+    }
+  }
+
+  /**
+   * Revokes an academic institution on-chain via root contract owner (Status: 4 = Revoked).
+   */
+  static async revokeInstitution(walletAddress, name, domain) {
+    const { contract, signer } = getBlockchainContext();
+    if (!contract || !signer) {
+      return {
+        txHash: null,
+        onChain: false,
+        error: 'Blockchain smart contract or root signer wallet is not connected.'
+      };
+    }
+
+    try {
+      const tx = await contract.setInstitutionStatus(walletAddress, name, domain, 4, { gasLimit: 250000 });
+      const receipt = await tx.wait(1);
+
+      const instRecord = await contract.getInstitution(walletAddress);
+      return {
+        txHash: receipt.transactionHash,
+        blockNumber: receipt.blockNumber,
+        onChain: receipt.status === 1 && instRecord.status === 4,
+        status: 4
+      };
+    } catch (err) {
+      return {
+        txHash: null,
+        onChain: false,
+        error: err.message
+      };
+    }
+  }
+
+  /**
+   * Reads on-chain institution status.
+   */
+  static async getInstitution(walletAddress) {
+    const { contract } = getBlockchainContext();
+    if (!contract) {
+      return { onChain: false, error: 'Contract not connected.' };
+    }
+    try {
+      const inst = await contract.getInstitution(walletAddress);
+      return {
+        name: inst.name,
+        officialDomain: inst.officialDomain,
+        status: Number(inst.status),
+        registeredAt: Number(inst.registeredAt),
+        onChain: true
+      };
+    } catch (err) {
+      return { onChain: false, error: err.message };
     }
   }
 }

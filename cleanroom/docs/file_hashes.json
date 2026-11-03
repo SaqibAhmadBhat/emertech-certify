@@ -1,15 +1,15 @@
 {
   "cleanroom/CLEANROOM_AUDIT.md": {
-    "sha256": "20aceb1faf94b6d56d1781c0839e3a960cf2c3cd25fa536d1c59dccfcf35bc36",
-    "bytes": 9924
+    "sha256": "7d6e61be34d8252064c9e13452e76b743bbe9544719e9f9c2a0d433e3dcfb482",
+    "bytes": 10326
   },
   "cleanroom/CLEANROOM_SPECIFICATIONS.md": {
     "sha256": "fb3b9728434f8557c20659129d5689363d60a3e3f213edd1367a6f90729e3e45",
     "bytes": 7749
   },
   "cleanroom/README.md": {
-    "sha256": "d76111a711fb44bc98ea9803f11499075fb4e5a389727d601f1fa8c330477eeb",
-    "bytes": 10238
+    "sha256": "270ed153196132c194a792cc0b40606cd38478aa11bb7907643c9fecc567e458",
+    "bytes": 10970
   },
   "cleanroom/backend/package.json": {
     "sha256": "4239aaf95953b3529f713651f5f863133f33720eab22be5ef87df3cd27820071",
@@ -20,20 +20,20 @@
     "bytes": 1521
   },
   "cleanroom/backend/src/config/blockchain.js": {
-    "sha256": "920e508b444b89d571d14ede0ca401437120567aad3356b260eca90459782fa5",
-    "bytes": 3795
+    "sha256": "7dee8f3a6d04ecdc621168a32e48a21d83a75b0ee2fc445a315698b92751a153",
+    "bytes": 3849
   },
   "cleanroom/backend/src/config/db.js": {
     "sha256": "9a70b47a843ba9b835c408c6eaa89fb1510ff89bede88334c439f371554e3683",
     "bytes": 1155
   },
   "cleanroom/backend/src/config/env.js": {
-    "sha256": "33ac682c7c1375a39bf81f9f1d9ace9a228c1242b5857d708101242859ad348e",
-    "bytes": 2020
+    "sha256": "e52b1c22ca95d1d2875cbaf98381cc42298b0cceab6c58110f4e4030e93b5f29",
+    "bytes": 2328
   },
   "cleanroom/backend/src/controllers/AdminController.js": {
-    "sha256": "9acb516e49308f0cc6a007400632cbc1001e97e175a8696f15437c9999f5dbb2",
-    "bytes": 2619
+    "sha256": "cf05325f5fe8944b338db0c6d345a7cb85f4935da5f3a8f4ee8e76047dca493b",
+    "bytes": 5382
   },
   "cleanroom/backend/src/controllers/AuthController.js": {
     "sha256": "07e159579ea0d139c5ca9c1183fb9f6f8e253f0c5768b5d89230a10546e92773",
@@ -44,12 +44,12 @@
     "bytes": 4126
   },
   "cleanroom/backend/src/controllers/InstitutionController.js": {
-    "sha256": "06c92d9f61596728711a2674dc3e47ec08b06ceda4a17b4e86fb8deb9401d2c2",
-    "bytes": 12243
+    "sha256": "705e9439cde9ac75648e6f7923488494f296a97442c4be009599492a51390f97",
+    "bytes": 14572
   },
   "cleanroom/backend/src/controllers/VerifyController.js": {
-    "sha256": "6fad13e4f2c5c269f31cb2712dac1baaf4212284d882be644962da6209ddee07",
-    "bytes": 11556
+    "sha256": "4d50357b14d2563f919b07f3e30cd98eaa645e924d3b95a3224fdf6a05c041ce",
+    "bytes": 12047
   },
   "cleanroom/backend/src/middleware/authMiddleware.js": {
     "sha256": "e0f820a826eb3d35d55d25d7b12230dc5cdf669eb2bdd6e5f75a4f1aedad7391",
@@ -64,12 +64,12 @@
     "bytes": 637
   },
   "cleanroom/backend/src/models/Certificate.js": {
-    "sha256": "e01f61ee2ff80774ca574337ae1835445cae70c06a44ff0f464b8c5ddde7d3e6",
-    "bytes": 1862
+    "sha256": "580f25e676357b54fc5c89c8b32412fdaeb7292880beb1b0650c41e81554b7cd",
+    "bytes": 1929
   },
   "cleanroom/backend/src/models/Institution.js": {
-    "sha256": "bef47a0980448cbf9997d0fa2be0fbae002a7e03a850509b3949e00566bb7b7f",
-    "bytes": 944
+    "sha256": "9c0cc50008ce93e503e3f861e3de803a04873e66e9bbd9430ea10b090f458eb0",
+    "bytes": 1404
   },
   "cleanroom/backend/src/models/User.js": {
     "sha256": "baeacdfed4fa82c3153821a11ad0f9743f7530be05bc4937388ef1342aae057a",
@@ -100,12 +100,16 @@
     "bytes": 918
   },
   "cleanroom/backend/src/services/BlockchainService.js": {
-    "sha256": "a00d1494e4317e99191a42fcb662d3fcb07ff9ff50fd2fd22b66540d05ecf894",
-    "bytes": 4955
+    "sha256": "fb7c33ea76cea00c279725b807492d107aa30c83193e3d6057d403eb36e1e7a7",
+    "bytes": 9779
   },
   "cleanroom/backend/src/services/CryptoService.js": {
     "sha256": "f2591c0e47801f15cfd76874bf31e306dd027796cd006857634b2e75dcc108d5",
     "bytes": 3665
+  },
+  "cleanroom/backend/src/services/KeyVaultService.js": {
+    "sha256": "d29962ca68a53e4478078358403c12b9c46471a9b043ad0b3bc45ea31b03e490",
+    "bytes": 3919
   },
   "cleanroom/backend/src/services/OcrService.js": {
     "sha256": "379445f7f553bae073c233ab008dca6e5d321d20653b8212101e0a17faf81b9e",
@@ -120,8 +124,8 @@
     "bytes": 1903
   },
   "cleanroom/backend/test/cleanroom.api.test.js": {
-    "sha256": "c9d2a8a80513b233c285e13d1d92a8689b2e2e7130bf240cfcfb3b698468ae94",
-    "bytes": 29898
+    "sha256": "a4c8f300b4a54e8c7ba785897c189727a3ea03dda0b93d3cbe0c26a76d8c5241",
+    "bytes": 38850
   },
   "cleanroom/contracts/contracts/EmertechCertificateRegistry.sol": {
     "sha256": "c8b09e3500b4cc2256a024e474fc9ee3db60f982449f124eaf92f1b34bc75d80",
@@ -140,16 +144,16 @@
     "bytes": 1111
   },
   "cleanroom/contracts/test/EmertechCertificateRegistry.test.js": {
-    "sha256": "65b8ef423836b947f5eb697545c563f6840b79c3e12358f1eae1c493ed90ed73",
-    "bytes": 6955
+    "sha256": "be86c409bedfdd60e77350b5ca6bf19fefaaf4bd46cf4b20f5a7e22538c61225",
+    "bytes": 7118
   },
   "cleanroom/docs/API_DOCUMENTATION.md": {
     "sha256": "b18f09fd702837e0f978c7a9cc457ce4fef5554de6cd0d81d697d736735cce37",
     "bytes": 4082
   },
   "cleanroom/docs/ARCHITECTURE.md": {
-    "sha256": "ca4648222a96a0bb843ff2c094db377035645e505ff9418bb31278576b2d7091",
-    "bytes": 8051
+    "sha256": "07c6fcbdf6da003e054cc57de9220ff4e7692b136c16510c514a3bff8c3a4a2e",
+    "bytes": 8234
   },
   "cleanroom/docs/CHANGELOG.md": {
     "sha256": "6cd4552bbeeec490826e83cf7f58f869b2f01661dd32e9fe3c77c39cf73685df",
@@ -160,32 +164,32 @@
     "bytes": 5818
   },
   "cleanroom/docs/PROVENANCE_AUDIT.md": {
-    "sha256": "472807155dc3f85fc107d04cd744094215b06c481be483b55598bca2a5f9fe59",
-    "bytes": 13115
+    "sha256": "3f2a3ad0c590d6884f288d94f93b26341fc32ac71ec9150dc3833c4fc6e4681f",
+    "bytes": 13401
   },
   "cleanroom/docs/REFERENCES.md": {
     "sha256": "a17765cc215f3a284c92b0bf55fd9daf930467a2509e675015ac557cc6dc61c4",
     "bytes": 3250
   },
   "cleanroom/docs/SECURITY.md": {
-    "sha256": "395ff7862f415814f0ded24070952b3906f2d291656bd0d317868e605ef9731b",
-    "bytes": 4635
+    "sha256": "dd62859427a660426e8bbaab0490c758ac3a1c925b568eb32c067f811dc7d69e",
+    "bytes": 4736
   },
   "cleanroom/docs/SETUP.md": {
-    "sha256": "759a739826d88b8c01dadfed4353b6e86415d186507651d5d27656433901cd12",
-    "bytes": 2011
+    "sha256": "6c9943a2a7cd540a19dc864d68c34b9e36a98b2a86e7521462ecefad45adab39",
+    "bytes": 2136
   },
   "cleanroom/docs/SMART_CONTRACTS.md": {
     "sha256": "4efd73725b5a23395c536ba0464e19586e2f9a4e31f0598204bc6150fcaaebbf",
     "bytes": 2758
   },
   "cleanroom/docs/TESTING.md": {
-    "sha256": "d398ae9bbf3d237a74373f58edcc5e3bcbdad3f61e51a55423a8ecd909afb580",
-    "bytes": 2182
+    "sha256": "60e3a0d91850c4d5982056ccda36dc74d9f2a302390a91a02ed55aa114989fe2",
+    "bytes": 6921
   },
   "cleanroom/docs/file_hashes.json": {
-    "sha256": "5c09ca4aeac32c4ea2d3b3c5c6b59edd5753662b83c00a9394675d93a5c2d437",
-    "bytes": 10107
+    "sha256": "afd627ff514ad3aa7176a6d105a893c3d1aa1435bc45ac6f7cd107fa44a80266",
+    "bytes": 10271
   },
   "cleanroom/frontend/package.json": {
     "sha256": "1af1ed036ceacff1e18f11c32d0083b98e309951419451527140cb7461b4b79b",
@@ -240,8 +244,8 @@
     "bytes": 3298
   },
   "cleanroom/frontend/src/pages/PublicVerifyPage.js": {
-    "sha256": "fe626a7f2a5210320811343f5df54170125c659a32406153afcc80b9a5bf748f",
-    "bytes": 13799
+    "sha256": "9ec023c526474b9c986376aecb57cefc1af6de0c19f48bb031e5490bc0c5e30e",
+    "bytes": 14867
   },
   "cleanroom/frontend/src/pages/RegisterPage.js": {
     "sha256": "55bbb0d713e68a1a98dec7f6cd0b6e43f43bd41c43ba2473391025134d8fa68d",

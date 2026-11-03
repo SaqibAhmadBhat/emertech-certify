@@ -1,3 +1,4 @@
+const { ethers } = require('ethers');
 const Institution = require('../models/Institution');
 const Certificate = require('../models/Certificate');
 const AuditLog = require('../models/AuditLog');
@@ -27,23 +28,98 @@ class AdminController {
         return res.status(404).json({ success: false, message: 'Institution not found.' });
       }
 
-      institution.status = status;
       if (status === 'AUTHORIZED') {
-        institution.approvedAt = new Date();
-        institution.approvedByAdmin = req.user._id;
+        // 1. Validate Ethereum wallet format
+        if (!institution.walletAddress || !ethers.utils.isAddress(institution.walletAddress)) {
+          institution.onChainAuthorized = false;
+          await institution.save();
+          return res.status(400).json({
+            success: false,
+            message: `On-chain authorization failed: Invalid Ethereum wallet address '${institution.walletAddress}'.`,
+            onChainAuthorized: false
+          });
+        }
 
-        // Authorize on smart contract
-        await BlockchainService.authorizeInstitution(
+        // 2. Execute on-chain authorization transaction
+        const authResult = await BlockchainService.authorizeInstitution(
           institution.walletAddress,
           institution.name,
           institution.officialDomain
         );
+
+        if (!authResult.onChain) {
+          institution.onChainAuthorized = false;
+          await institution.save();
+          return res.status(502).json({
+            success: false,
+            message: `On-chain authorization failed: ${authResult.error || 'Transaction reverted or blockchain unavailable.'}`,
+            onChainAuthorized: false,
+            error: authResult.error
+          });
+        }
+
+        institution.status = 'AUTHORIZED';
+        institution.onChainAuthorized = true;
+        institution.onChainStatus = 'AUTHORIZED';
+        institution.authorizationTxHash = authResult.txHash;
+        institution.approvedAt = new Date();
+        institution.approvedByAdmin = req.user._id;
+        await institution.save();
+
+        return res.status(200).json({
+          success: true,
+          message: 'Institution successfully authorized and accredited on-chain.',
+          institution,
+          txHash: authResult.txHash
+        });
       }
+
+      if (status === 'SUSPENDED') {
+        const suspResult = await BlockchainService.suspendInstitution(
+          institution.walletAddress,
+          institution.name,
+          institution.officialDomain
+        );
+        institution.status = 'SUSPENDED';
+        institution.onChainAuthorized = false;
+        institution.onChainStatus = suspResult.onChain ? 'SUSPENDED' : institution.onChainStatus;
+        await institution.save();
+
+        return res.status(200).json({
+          success: true,
+          message: 'Institution suspended successfully.',
+          institution,
+          onChain: suspResult.onChain
+        });
+      }
+
+      if (status === 'REVOKED') {
+        const revResult = await BlockchainService.revokeInstitution(
+          institution.walletAddress,
+          institution.name,
+          institution.officialDomain
+        );
+        institution.status = 'REVOKED';
+        institution.onChainAuthorized = false;
+        institution.onChainStatus = revResult.onChain ? 'REVOKED' : institution.onChainStatus;
+        await institution.save();
+
+        return res.status(200).json({
+          success: true,
+          message: 'Institution revoked successfully.',
+          institution,
+          onChain: revResult.onChain
+        });
+      }
+
+      // PENDING
+      institution.status = 'PENDING';
+      institution.onChainAuthorized = false;
       await institution.save();
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
-        message: `Institution status updated to ${status}.`,
+        message: 'Institution status set to PENDING.',
         institution
       });
     } catch (err) {

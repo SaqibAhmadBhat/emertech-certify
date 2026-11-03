@@ -34,6 +34,31 @@ const institutionSchema = new mongoose.Schema({
     enum: ['PENDING', 'AUTHORIZED', 'SUSPENDED', 'REVOKED'],
     default: 'PENDING'
   },
+  onChainAuthorized: {
+    type: Boolean,
+    default: false
+  },
+  authorizationTxHash: {
+    type: String,
+    default: null
+  },
+  onChainStatus: {
+    type: String,
+    enum: ['UNREGISTERED', 'PENDING', 'AUTHORIZED', 'SUSPENDED', 'REVOKED'],
+    default: 'UNREGISTERED'
+  },
+  encryptedPrivateKey: {
+    type: String,
+    default: null
+  },
+  keyVaultIv: {
+    type: String,
+    default: null
+  },
+  keyVaultTag: {
+    type: String,
+    default: null
+  },
   accreditedBy: {
     type: String,
     default: 'National Accreditation Board'

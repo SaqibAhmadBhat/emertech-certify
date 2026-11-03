@@ -62,7 +62,17 @@ class InstitutionController {
 
       const institutionCode = req.user.institutionCode || 'INST';
       const institutionName = req.user.institutionName || 'Accredited Academic Institution';
-      const issuerWallet = req.user.walletAddress || '';
+
+      // Verify Institution Authorization
+      const institution = await Institution.findOne({ institutionCode: institutionCode.toUpperCase() });
+      if (!institution || institution.status !== 'AUTHORIZED') {
+        return res.status(403).json({
+          success: false,
+          message: `Institution '${institutionCode}' is not authorized to issue academic credentials. Current status: ${institution ? institution.status : 'NOT_FOUND'}.`
+        });
+      }
+
+      const issuerWallet = institution.walletAddress;
 
       const certificateId = `${institutionCode}-${Date.now().toString(36).toUpperCase()}-${studentIdentifier.slice(-4)}`;
       const issuedAtTimestamp = Math.floor(Date.now() / 1000);
@@ -101,11 +111,12 @@ class InstitutionController {
       const recipientSalt = CryptoService.generateSalt(16);
       const recipientIdHash = CryptoService.computeSaltedRecipientHash(studentIdentifier, recipientSalt);
 
-      // 5. Anchor to Ethereum Smart Contract
+      // 5. Anchor to Ethereum Smart Contract with Institution-Specific Signer
       const blockchainResult = await BlockchainService.registerCertificate(
         certHash,
         recipientIdHash,
-        storageResult.ipfsCID
+        storageResult.ipfsCID,
+        issuerWallet
       );
 
       // 6. Save to MongoDB
@@ -124,7 +135,8 @@ class InstitutionController {
         gradeOrDistinction: gradeOrDistinction || 'First Class with Distinction',
         institutionCode,
         institutionName,
-        issuerWalletAddress: issuerWallet,
+        issuerWalletAddress: issuerWallet.toLowerCase(),
+        onChainIssuerAddress: blockchainResult.onChainIssuer ? blockchainResult.onChainIssuer.toLowerCase() : issuerWallet.toLowerCase(),
         ipfsCID: storageResult.ipfsCID,
         storagePath: storageResult.storagePath,
         blockchainTxHash: blockchainResult.txHash || null,
@@ -158,6 +170,8 @@ class InstitutionController {
           issuedAt: certificate.issuedAt,
           txHash: blockchainResult.txHash,
           onChain: blockchainResult.onChain,
+          issuerWallet: certificate.issuerWalletAddress,
+          onChainIssuer: blockchainResult.onChainIssuer || certificate.issuerWalletAddress,
           ipfsCID: storageResult.ipfsCID
         }
       });
@@ -173,11 +187,22 @@ class InstitutionController {
         return res.status(400).json({ success: false, message: 'Batch must be a non-empty array of students.' });
       }
 
+      const institutionCode = req.user.institutionCode || 'INST';
+      const institutionName = req.user.institutionName || 'Accredited Academic Institution';
+
+      const institution = await Institution.findOne({ institutionCode: institutionCode.toUpperCase() });
+      if (!institution || institution.status !== 'AUTHORIZED') {
+        return res.status(403).json({
+          success: false,
+          message: `Institution '${institutionCode}' is not authorized to issue academic credentials.`
+        });
+      }
+
+      const issuerWallet = institution.walletAddress;
+
       const results = [];
       for (const item of batch) {
         try {
-          const institutionCode = req.user.institutionCode || 'INST';
-          const institutionName = req.user.institutionName || 'Accredited Academic Institution';
           const certificateId = `${institutionCode}-${Date.now().toString(36).toUpperCase()}-${(item.studentIdentifier || '0000').slice(-4)}`;
           const issuedAtTimestamp = Math.floor(Date.now() / 1000);
 
@@ -208,7 +233,12 @@ class InstitutionController {
           const storageResult = await StorageService.persistDocument(pdfBuffer, 'pdf', certHash);
           const recipientSalt = CryptoService.generateSalt(16);
           const recipientIdHash = CryptoService.computeSaltedRecipientHash(item.studentIdentifier, recipientSalt);
-          const bcRes = await BlockchainService.registerCertificate(certHash, recipientIdHash, storageResult.ipfsCID);
+          const bcRes = await BlockchainService.registerCertificate(
+            certHash,
+            recipientIdHash,
+            storageResult.ipfsCID,
+            issuerWallet
+          );
 
           const cert = await Certificate.create({
             certificateId,
@@ -225,7 +255,8 @@ class InstitutionController {
             gradeOrDistinction: item.gradeOrDistinction || 'First Class with Distinction',
             institutionCode,
             institutionName,
-            issuerWalletAddress: req.user.walletAddress || '',
+            issuerWalletAddress: issuerWallet.toLowerCase(),
+            onChainIssuerAddress: bcRes.onChainIssuer ? bcRes.onChainIssuer.toLowerCase() : issuerWallet.toLowerCase(),
             ipfsCID: storageResult.ipfsCID,
             storagePath: storageResult.storagePath,
             blockchainTxHash: bcRes.txHash || null,
@@ -239,6 +270,8 @@ class InstitutionController {
             certHash: cert.certHash,
             txHash: bcRes.txHash,
             onChain: bcRes.onChain,
+            issuerWallet: cert.issuerWalletAddress,
+            onChainIssuer: cert.onChainIssuerAddress,
             status: 'SUCCESS'
           });
         } catch (itemErr) {
@@ -267,8 +300,29 @@ class InstitutionController {
         return res.status(400).json({ success: false, message: 'Certificate is already revoked.' });
       }
 
+      // Determine revoker signing entity
+      let revokerWallet = null;
+      if (req.user.role === 'INSTITUTION_ADMIN') {
+        const institution = await Institution.findOne({ institutionCode: req.user.institutionCode });
+        if (!institution) {
+          return res.status(403).json({ success: false, message: 'Institution record not found for admin.' });
+        }
+        revokerWallet = institution.walletAddress;
+      }
+
       // 1. Revoke on Smart Contract
-      const bcRes = await BlockchainService.revokeCertificate(certHash, reason || 'Administrative update');
+      const bcRes = await BlockchainService.revokeCertificate(
+        certHash,
+        reason || 'Administrative update',
+        revokerWallet
+      );
+
+      if (!bcRes.onChain && bcRes.error && bcRes.error.includes('UnauthorizedRevocation')) {
+        return res.status(403).json({
+          success: false,
+          message: 'Unauthorized on-chain revocation: caller wallet is not the issuing institution or contract owner.'
+        });
+      }
 
       // 2. Update Database Record
       certificate.isRevoked = true;
@@ -285,7 +339,7 @@ class InstitutionController {
         actorEmail: req.user.email,
         actorRole: req.user.role,
         clientIp: req.ip,
-        diagnosticDetails: { reason, txHash: bcRes.txHash, onChain: bcRes.onChain }
+        diagnosticDetails: { reason, txHash: bcRes.txHash, onChain: bcRes.onChain, revoker: revokerWallet }
       });
 
       res.status(200).json({

@@ -176,3 +176,24 @@ Follow these steps during your project viva:
 > 2. **Zero-Knowledge Proofs (ZK-SNARKs)**: Enabling students to prove specific attributes (such as *"GPA is above 8.0"* or *"graduated after 2024"*) without revealing their full marks or transcript.
 > 3. **Layer 2 Rollup Deployment**: Deploying contracts on Arbitrum or Polygon with automated meta-transactions (EIP-2771) so universities do not need to manage gas tokens directly.
 
+---
+
+## 5. Clean-Room v2.0 Architecture & Automated Test Matrix
+
+In the final engineering evolution (v2.0 Clean-Room Architecture), the system was reengineered into an independently authored implementation located in `cleanroom/`:
+
+### Automated Test Coverage:
+- **14 Smart Contract Unit Tests** (`cleanroom/contracts/test/EmertechCertificateRegistry.test.js`): Testing deployment, institutional accreditation, NIST SHA-256 certificate registration, idempotent zero-hash guards, and institutional/emergency revocation.
+- **25 Backend Integration Tests** (`cleanroom/backend/test/cleanroom.api.test.js`): Executing end-to-end against a real local Hardhat EVM ledger, verifying live mined transactions, NIST Known-Answer Tests, salted student pseudonymization, invalid wallet address rejections, offline blockchain handling, institutional suspensions, and synthetic OCR extraction.
+
+### Operating Modes & Fallback Taxonomy:
+1. **Local EVM Node (Hardhat)**: Executes genuine Ethereum transactions, mines blocks, and generates verified 66-character transaction hashes.
+2. **Public Testnet (Sepolia)**: Anchors credentials on public decentralized networks.
+3. **Offline Demonstration Mode (`OFFCHAIN_DEMO`)**: If the Ethereum node is unreachable, the system stores certificates in MongoDB and labels them as `OFFCHAIN_DEMO`, explicitly notifying verification clients that on-chain consensus was not executed. Off-chain verification is **never** described as blockchain verification.
+4. **Database-Only Cache**: Local MongoDB indexing for rapid search and student transcripts.
+
+### Institutional Transaction Signing:
+- The system enforces that the on-chain issuer (`msg.sender`) strictly matches the approved institution's wallet address (`0x70997970C51812dc3A010C7d01b50e0d17dc79C8`), preventing the contract deployer from masquerading as the issuing entity.
+- Signing credentials are held in encrypted custody via AES-256-GCM or resolved via local unlocked development accounts; plaintext private keys are never stored in MongoDB or exposed to the frontend.
+
+

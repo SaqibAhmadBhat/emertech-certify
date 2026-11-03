@@ -3,82 +3,152 @@ EMERTECH CERTIFY CLEAN-ROOM PROVENANCE & SIMILARITY AUDIT REPORT
 Lead Architect: Saqib Ahmad Bhat
 Institution: Government College of Engineering, Tirunelveli
 ================================================================================
-Clean-Room Files Analyzed:  66
-Legacy Files Analyzed:      79
-Total Block Matches (3+ lines): 41
+Clean-Room Files Analyzed:       67
+Legacy Files Analyzed:           79
+Exact File Matches Detected:     0
+Files with 3-Line Boilerplate:   14
+Potentially Significant (5+ l):  3
+
+--- OVERLAP CLASSIFICATION BREAKDOWN ---
+  • Syntactic Programming Idiom: 17 occurrences
+  • Package / Manifest Metadata: 11 occurrences
+  • Framework Import / CommonJS Export Boilerplate: 7 occurrences
+  • CSS Reset / Layout Style Utility: 4 occurrences
+  • Test Teardown Boilerplate: 1 occurrences
+  • HTML5 Document Wrapper Boilerplate: 1 occurrences
 
 --- DETAILED BLOCK-LEVEL OVERLAP INVENTORY ---
 
 File: cleanroom/backend/package.json (9 matching 3-line blocks)
-   • "bcryptjs": "^2.4.3", / "cors": "^2.8.5", / "dotenv": "^16.3.1",
-   • "mongoose": "^7.5.2", / "multer": "^1.4.5-lts.1", / "pdf-lib": "^1.17.1",
-   • "multer": "^1.4.5-lts.1", / "pdf-lib": "^1.17.1", / "pdf-parse": "^1.1.1",
+   [Package / Manifest Metadata]
+   Block: "qrcode": "^1.5.1", / "tesseract.js": "^5.1.1" / "devDependencies": {
+   Legacy: backend/package.json
+   [Syntactic Programming Idiom]
+   Block: "multer": "^1.4.5-lts.1", / "pdf-lib": "^1.17.1", / "pdf-parse": "^1.1.1",
+   Legacy: backend/package.json
+   [Framework Import / CommonJS Export Boilerplate]
+   Block: "ethers": "^5.7.2", / "express": "^4.18.2", / "jsonwebtoken": "^9.0.2",
+   Legacy: backend/package.json
 
 File: cleanroom/backend/src/app.js (1 matching 3-line blocks)
-   • developer: 'Saqib Ahmad Bhat', / institution: 'Government College of Engineering, Tirunelveli', / timestamp: new Date().toISOString()
+   [Syntactic Programming Idiom]
+   Block: developer: 'Saqib Ahmad Bhat', / institution: 'Government College of Engineering, Tirunelveli', / timestamp: new Date().toISOString()
+   Legacy: backend/server.js
 
 File: cleanroom/backend/src/routes/verifyRoutes.js (1 matching 3-line blocks)
-   • const express = require('express'); / const router = express.Router(); / const multer = require('multer');
+   [Framework Import / CommonJS Export Boilerplate]
+   Block: const express = require('express'); / const router = express.Router(); / const multer = require('multer');
+   Legacy: backend/routes/ai.js, backend/routes/public.js
 
 File: cleanroom/backend/src/server.js (1 matching 3-line blocks)
-   • process.exit(1); / if (require.main === module) { / startServer();
+   [Syntactic Programming Idiom]
+   Block: process.exit(1); / if (require.main === module) { / startServer();
+   Legacy: backend/server.js
 
 File: cleanroom/backend/test/cleanroom.api.test.js (1 matching 3-line blocks)
-   • } finally { / if (server) { / server.close();
+   [Test Teardown Boilerplate]
+   Block: } finally { / if (server) { / server.close();
+   Legacy: backend/test/api.test.js
 
 File: cleanroom/contracts/package.json (3 matching 3-line blocks)
-   • "license": "MIT", / "scripts": { / "compile": "hardhat compile",
-   • "scripts": { / "compile": "hardhat compile", / "test": "hardhat test",
-   • "author": "Saqib Ahmad Bhat", / "license": "MIT", / "scripts": {
+   [Package / Manifest Metadata]
+   Block: "license": "MIT", / "scripts": { / "compile": "hardhat compile",
+   Legacy: contracts/package.json
+   [Package / Manifest Metadata]
+   Block: "scripts": { / "compile": "hardhat compile", / "test": "hardhat test",
+   Legacy: contracts/package.json
+   [Package / Manifest Metadata]
+   Block: "author": "Saqib Ahmad Bhat", / "license": "MIT", / "scripts": {
+   Legacy: contracts/package.json
 
 File: cleanroom/contracts/scripts/deploy.js (2 matching 3-line blocks)
-   • const hre = require("hardhat"); / const fs = require("fs"); / const path = require("path");
-   • const fs = require("fs"); / const path = require("path"); / async function main() {
+   [Framework Import / CommonJS Export Boilerplate]
+   Block: const hre = require("hardhat"); / const fs = require("fs"); / const path = require("path");
+   Legacy: contracts/scripts/deploy.js
+   [Framework Import / CommonJS Export Boilerplate]
+   Block: const fs = require("fs"); / const path = require("path"); / async function main() {
+   Legacy: contracts/scripts/deploy.js
 
 File: cleanroom/contracts/test/EmertechCertificateRegistry.test.js (2 matching 3-line blocks)
-   • let registry; / let owner; / let university;
-   • let owner; / let university; / let unauthorizedUser;
+   [Syntactic Programming Idiom]
+   Block: let registry; / let owner; / let university;
+   Legacy: contracts/test/CertificateRegistry.test.js
+   [Syntactic Programming Idiom]
+   Block: let owner; / let university; / let unauthorizedUser;
+   Legacy: contracts/test/CertificateRegistry.test.js
 
 File: cleanroom/frontend/package.json (9 matching 3-line blocks)
-   • "scripts": { / "start": "react-scripts start", / "build": "react-scripts build",
-   • "browserslist": { / "production": [ / "not dead",
-   • "production": [ / "not dead", / "not op_mini all"
+   [Package / Manifest Metadata]
+   Block: "scripts": { / "start": "react-scripts start", / "build": "react-scripts build",
+   Legacy: frontend/certiport-frontend/package.json
+   [Package / Manifest Metadata]
+   Block: "react": "^19.1.1", / "react-dom": "^19.1.1", / "react-router-dom": "^6.14.1",
+   Legacy: frontend/certiport-frontend/package.json
+   [Package / Manifest Metadata]
+   Block: "development": [ / "last 1 chrome version", / "last 1 firefox version",
+   Legacy: frontend/certiport-frontend/package.json
 
 File: cleanroom/frontend/public/index.html (1 matching 3-line blocks)
-   • <!DOCTYPE html> / <html lang="en"> / <meta charset="utf-8" />
+   [HTML5 Document Wrapper Boilerplate]
+   Block: <!DOCTYPE html> / <html lang="en"> / <meta charset="utf-8" />
+   Legacy: frontend/certiport-frontend/public/index.html
 
 File: cleanroom/frontend/src/App.js (2 matching 3-line blocks)
-   • import Navbar from './components/Navbar'; / import Footer from './components/Footer'; / import ProtectedRoute from './components/ProtectedRoute';
-   • import Footer from './components/Footer'; / import ProtectedRoute from './components/ProtectedRoute'; / import LandingPage from './pages/LandingPage';
+   [Framework Import / CommonJS Export Boilerplate]
+   Block: import Footer from './components/Footer'; / import ProtectedRoute from './components/ProtectedRoute'; / import LandingPage from './pages/LandingPage';
+   Legacy: frontend/certiport-frontend/src/App.js
+   [Framework Import / CommonJS Export Boilerplate]
+   Block: import Navbar from './components/Navbar'; / import Footer from './components/Footer'; / import ProtectedRoute from './components/ProtectedRoute';
+   Legacy: frontend/certiport-frontend/src/App.js
 
 File: cleanroom/frontend/src/styles/main.css (7 matching 3-line blocks)
-   • flex-direction: column; / min-height: 100vh; / .main-content {
-   • width: 100%; / border-collapse: collapse; / text-align: left;
-   • font-weight: 600; / text-decoration: none; / cursor: pointer;
+   [CSS Reset / Layout Style Utility]
+   Block: background: transparent; / border: none; / cursor: pointer;
+   Legacy: frontend/certiport-frontend/src/styles/Dashboards.css
+   [Syntactic Programming Idiom]
+   Block: flex-direction: column; / min-height: 100vh; / .main-content {
+   Legacy: frontend/certiport-frontend/src/styles/theme.css
+   [Syntactic Programming Idiom]
+   Block: display: flex; / flex-direction: column; / min-height: 100vh;
+   Legacy: frontend/certiport-frontend/src/styles/theme.css
 
 File: cleanroom/frontend/src/styles/theme.css (1 matching 3-line blocks)
-   • box-sizing: border-box; / margin: 0; / padding: 0;
+   [CSS Reset / Layout Style Utility]
+   Block: box-sizing: border-box; / margin: 0; / padding: 0;
+   Legacy: frontend/certiport-frontend/src/styles/theme.css
 
 File: cleanroom/package.json (1 matching 3-line blocks)
-   • "author": "Saqib Ahmad Bhat", / "license": "MIT", / "scripts": {
+   [Package / Manifest Metadata]
+   Block: "author": "Saqib Ahmad Bhat", / "license": "MIT", / "scripts": {
+   Legacy: contracts/package.json
 
 ================================================================================
---- QUALITATIVE AUDIT EVALUATION ---
-1. Proprietary Algorithm Transfer: ZERO (0 lines).
-   No smart contract business logic, encryption routines, vector PDF generators,
-   or neural OCR entity extractors from Certiport were copied.
-2. Nature of Block Overlaps:
-   All matching 3-line blocks consist exclusively of non-copyrightable programming
-   idioms: npm dependency manifests (package.json), standard CJS require/export
-   headers, CSS box-sizing resets, HTML5 doctype headers, and test suite setup.
-3. Third-Party Library Boundaries: Standard open-source libraries (Ethers.js,
-   pdf-lib, Tesseract.js, React) are imported via standard npm package manifests
-   and remain governed by their respective upstream licenses.
+--- MANUAL REVIEW OF DETECTED OVERLAPS ---
+1. Package Manifests: Overlaps in package.json files reflect common public
+   runtime dependencies (bcryptjs, cors, ethers, react, dotenv). These dependencies
+   are standard open-source tools required for Web3 and REST services.
+2. Framework Scaffolding: Overlaps in backend files consist of standard CommonJS
+   constructs ('const router = express.Router();', 'module.exports = router;').
+   These are standard syntactic conventions devoid of proprietary logic.
+3. Smart Contract Architecture: Zero (0) Solidity code or contract functions
+   overlap with the legacy Certiport contracts. EmertechCertificateRegistry.sol
+   uses a custom bytes32 mapping architecture and institution status enums.
+4. Potentially Significant Overlaps (5+ Lines): Overlaps in 5+ line contiguous blocks
+   occur strictly in JSON package manifests (package.json) reflecting standard npm
+   dependency listings and default browser compatibility arrays (browserslist).
+   Zero source code implementation files contained 5+ line overlaps.
 
---- AUDIT LIMITATIONS & LEGAL DISCLAIMER ---
-1. Technical Scope: This report presents empirical software engineering analysis
-   based on AST and token matching. It demonstrates the absence of copied code.
-2. No Formal Legal Certification: This document represents an internal academic
-   audit tool. It does NOT constitute a formal legal opinion, attorney work product,
-   or statutory certification of copyright non-infringement.
+--- METHODOLOGY & LIMITATIONS ---
+1. Scanning Technique: Normalized line-block token matching (3-line and 5-line sliding
+   windows). This tool normalizes whitespace and ignores standard line comments.
+2. Method Limitations: This scan does NOT constitute a full Abstract Syntax Tree (AST)
+   graph isomorphism comparison or semantic decompiler analysis. It is an empirical
+   source-level lexical inspection designed to verify code provenance.
+3. Excluded Artifacts: node_modules, build directories, generated test logs,
+   and lockfiles are excluded from lexical comparison.
+
+--- FORMAL ASSESSMENT CONCLUSION ---
+The automated scan did not identify copied proprietary implementation blocks within
+the scope of the method used. This is an internal technical assessment and not legal
+certification.
 ================================================================================

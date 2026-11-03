@@ -5,7 +5,7 @@ const privateKey = process.env.ETH_PRIVATE_KEY;
 
 if (!privateKey) {
   console.log("Usage: Ensure ETH_PRIVATE_KEY is set in your .env file.");
-  console.log("Example format: ETH_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80");
+  console.log("Example format: ETH_PRIVATE_KEY=0x<your_64_character_hex_private_key>");
   process.exit(0);
 }
 

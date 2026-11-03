@@ -39,7 +39,7 @@ Emertech Certify implements a **hybrid decentralized architecture** engineered f
 ### Architectural Classification
 - **Decentralized Verification**: Anyone can verify certificate validity, timestamp, and issuer address against the blockchain ledger without requiring API keys, central gatekeepers, or proprietary software.
 - **Institutional Governance**: Credential issuance authority is restricted to authorized academic institutions vetted by the contract owner.
-- **Resilient Fallback Infrastructure**: Built-in development/testing fallbacks (embedded in-memory MongoDB, local filesystem storage, and fallback provider) ensure full functionality during offline evaluation.
+- **Operational Flexibility & Offline Fallback**: Development and testing environments benefit from embedded in-memory MongoDB and local filesystem storage. When the blockchain JSON-RPC node is unreachable, the system enters offline demonstration mode (`OFFCHAIN_DEMO`), persisting records in MongoDB while transparently notifying verification clients that on-chain consensus was not executed.
 
 ---
 

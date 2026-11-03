@@ -50,7 +50,7 @@ The Ethereum smart contract stores strictly minimal verification metadata:
 To enable seamless evaluation in offline or air-gapped environments:
 - **In-Memory MongoDB**: Automatically started via `mongodb-memory-server` if an external MongoDB instance is unreachable.
 - **Local Filesystem Storage**: Automatically persists generated vector PDFs and QR assets to disk (`storage/certificates/`) when third-party IPFS pinning (Pinata) is unconfigured.
-- **Local Fallback Provider**: Retains an in-memory verification ledger when an external Ethereum JSON-RPC node is not connected, ensuring uninterrupted demonstration workflows.
+- **Offline Demonstration Mode (`OFFCHAIN_DEMO`)**: If an external Ethereum JSON-RPC node is not connected, the service issues credentials in offline demonstration mode (`onChain: false`, `txHash: null`) and records them in MongoDB. The verification interface labels these as `OFFCHAIN_DEMO` with diagnostic notices, clearly distinguishing off-chain records from genuine blockchain consensus.
 
 ### Multi-Modal Verification Engine
 1. **Mode 1 (Blockchain Hash Query)**: Look up the 64-character hexadecimal SHA-256 digest on-chain.
@@ -66,7 +66,7 @@ To enable seamless evaluation in offline or air-gapped environments:
 # 1. Enter cleanroom directory
 cd cleanroom
 
-# 2. Run the complete test suite (14 contract tests + 19 backend tests on live EVM ledger)
+# 2. Run the complete test suite (14 contract tests + 25 backend integration tests on live EVM ledger)
 npm run test:all
 ```
 
@@ -92,7 +92,7 @@ npm run test:all
       ✔ Should prevent unauthorized third parties from revoking certificates
       ✔ Should reject revoking an already revoked certificate
 
-  14 passing (819ms)
+  14 passing (750ms)
 
 ================================================================
 🧪 EMERTECH CERTIFY CLEAN-ROOM v2.0 INTEGRATION TEST SUITE
@@ -104,24 +104,30 @@ npm run test:all
 3. Testing Super Administrator Registration & Login...       ✅ Verified.
 4. Testing Academic Institution Application Queue...         ✅ Verified.
 5. Testing Super Admin Approval & On-Chain Status...         ✅ Verified.
-6. Testing Authorized Institution Admin Login...             ✅ Verified.
-7. Testing Student Account Registration...                   ✅ Verified.
-8. Testing Certificate Issuance & Real EVM Anchoring...      ✅ Verified (TxHash mined).
-9. Testing Vector PDF Download Endpoint...                   ✅ Verified.
-10. Testing Mode 1: Public Verification by Hash...           ✅ Verified (onChain: true).
-11. Testing Mode 2: Verification by PDF Upload...            ✅ Verified (onChain: true).
-12. Testing Bitwise Tamper Detection on Altered PDF...       ✅ Verified (TAMPER_DETECTED).
-13. Testing Mode 3: QR Code Payload Verification...          ✅ Verified.
-14. Testing Student Credential Retrieval...                  ✅ Verified.
-15. Testing Real On-Chain Certificate Revocation...          ✅ Verified (TxHash mined).
-16. Testing Public Verification of Revoked Credential...     ✅ Verified.
-17. Testing Mode 4: Tesseract.js Neural OCR (Synthetic)...   ✅ Verified.
-18. Testing Batch Certificate Issuance (Real EVM)...         ✅ Verified.
-19. Testing Super Admin Telemetry & Governance...            ✅ Verified.
+6. Testing Rejection of Invalid Wallet Authorization...      ✅ Verified.
+7. Testing Handling of Unavailable Blockchain...             ✅ Verified.
+8. Testing Institution Status Transition to SUSPENDED...     ✅ Verified.
+9. Testing Prevention of Issuance by Suspended Inst...       ✅ Verified (403 Forbidden).
+10. Testing Restoration of Institution to AUTHORIZED...      ✅ Verified.
+11. Testing Authorized Institution Admin Login...            ✅ Verified.
+12. Testing Student Account Registration...                  ✅ Verified.
+13. Testing Certificate Issuance & Real EVM Anchoring...     ✅ Verified (TxHash mined, issuer verified).
+14. Testing Vector PDF Download Endpoint...                  ✅ Verified.
+15. Testing Mode 1: Public Verification by Hash...          ✅ Verified (onChain: true, issuer matches).
+16. Testing Mode 2: Verification by PDF Upload...           ✅ Verified (onChain: true).
+17. Testing Bitwise Tamper Detection on Altered PDF...      ✅ Verified (TAMPER_DETECTED).
+18. Testing Mode 3: QR Code Payload Verification...         ✅ Verified.
+19. Testing Student Credential Retrieval...                 ✅ Verified.
+20. Testing Real On-Chain Certificate Revocation...         ✅ Verified (TxHash mined).
+21. Testing Prevention of Unauthorized Revocation...         ✅ Verified (403 Forbidden).
+22. Testing Public Verification of Revoked Credential...    ✅ Verified.
+23. Testing Mode 4: Tesseract.js Neural OCR (Synthetic)...  ✅ Verified.
+24. Testing Batch Certificate Issuance (Real EVM)...        ✅ Verified.
+25. Testing Super Admin Telemetry & Governance...           ✅ Verified.
 
 ================================================================
 📊 CLEAN-ROOM v2.0 TEST EXECUTION SUMMARY:
-   Passed:  19
+   Passed:  25
    Failed:  0
    Skipped: 0
 ================================================================

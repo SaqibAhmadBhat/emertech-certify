@@ -345,6 +345,24 @@ export default function PublicVerifyPage() {
               </div>
             </div>
 
+            {(result.onChainIssuer || result.verificationData?.onChainIssuer || result.verificationData?.issuerWallet) && (
+              <div>
+                <span className="form-label">Verified On-Chain Issuer Wallet:</span>
+                <div className="mono-box" style={{ color: '#10B981', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{result.onChainIssuer || result.verificationData?.onChainIssuer || result.verificationData?.issuerWallet}</span>
+                  <span style={{ fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.2)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                    {result.onChainVerified ? 'ON-CHAIN CONSENSUS' : 'DATABASE RECORD'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {result.verificationNote && (
+              <div style={{ fontSize: '0.85rem', color: '#94A3B8', fontStyle: 'italic', marginTop: '0.25rem' }}>
+                ℹ️ {result.verificationNote}
+              </div>
+            )}
+
             {result.expectedHash && (
               <div>
                 <span className="form-label">Expected On-Chain Digest:</span>

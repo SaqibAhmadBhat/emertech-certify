@@ -74,6 +74,10 @@ const certificateSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  onChainIssuerAddress: {
+    type: String,
+    default: null
+  },
   ipfsCID: {
     type: String,
     default: ''

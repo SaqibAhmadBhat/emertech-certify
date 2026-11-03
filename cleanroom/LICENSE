@@ -40,3 +40,4 @@ dependencies governed by their respective upstream licenses:
 11. JSONWebToken: MIT License, Copyright (c) Auth0
 12. QRCode: MIT License, Copyright (c) Ryan Day
 13. mongodb-memory-server: MIT License, Copyright (c) nodkz
+

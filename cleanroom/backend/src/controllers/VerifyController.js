@@ -75,6 +75,7 @@ class VerifyController {
         status,
         onChainVerified,
         verificationNote,
+        onChainIssuer: blockchainRecord.issuer || null,
         verificationData: {
           certHash: cleanHash,
           onChainVerified,
@@ -86,6 +87,7 @@ class VerifyController {
           graduationDate: dbRecord ? dbRecord.graduationDate : '',
           institutionName: dbRecord ? dbRecord.institutionName : 'Accredited Institution',
           issuerWallet: blockchainRecord.issuer || (dbRecord ? dbRecord.issuerWalletAddress : ''),
+          onChainIssuer: blockchainRecord.issuer || (dbRecord ? (dbRecord.onChainIssuerAddress || dbRecord.issuerWalletAddress) : null),
           issuedAt: dbRecord ? dbRecord.issuedAt : (blockchainRecord.issuedAt ? new Date(blockchainRecord.issuedAt * 1000) : null),
           ipfsCID: dbRecord ? dbRecord.ipfsCID : blockchainRecord.metadataURI
         }
@@ -140,6 +142,7 @@ class VerifyController {
           success: true,
           status,
           onChainVerified,
+          onChainIssuer: blockchainRecord.issuer || exactMatch.onChainIssuerAddress || exactMatch.issuerWalletAddress,
           computedHash,
           tamperDetected: false,
           verificationData: {
@@ -149,6 +152,8 @@ class VerifyController {
             degreeTitle: exactMatch.degreeTitle,
             majorProgram: exactMatch.majorProgram,
             institutionName: exactMatch.institutionName,
+            issuerWallet: exactMatch.issuerWalletAddress,
+            onChainIssuer: blockchainRecord.issuer || exactMatch.onChainIssuerAddress || exactMatch.issuerWalletAddress,
             isRevoked,
             revocationReason: exactMatch.revocationReason
           }

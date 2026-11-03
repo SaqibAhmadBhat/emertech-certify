@@ -20,12 +20,20 @@ if (!jwtSecret) {
   }
 }
 
-// 2. Private Key Validation: prevent development key on public networks
+// 2. Private Key Validation: prevent development key on public networks via hash-based deny-list
 const deployerPrivateKey = process.env.DEPLOYER_PRIVATE_KEY ? process.env.DEPLOYER_PRIVATE_KEY.trim() : '';
-const KNOWN_HARDHAT_ACCOUNT_0 = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'.toLowerCase();
+// SHA-256 hashes of known development account #0 private key (with and without 0x prefix)
+const KNOWN_DEV_KEY_SHA256 = new Set([
+  '60a09e4357868c1e9b801052726d061c370429f723db84523ed58ac354f6eb8a',
+  'bc1a50966c9e6486bc4ebf880b51611a2a97fcb8e7a6976e9b81a9e3e8ca0e3c'
+]);
 
-if (deployerPrivateKey && deployerPrivateKey.toLowerCase() === KNOWN_HARDHAT_ACCOUNT_0 && !isLocalNetwork) {
-  throw new Error('Security Violation: Known Hardhat development private key cannot be used on non-local networks.');
+if (deployerPrivateKey) {
+  const normalizedKey = deployerPrivateKey.toLowerCase();
+  const keyHash = crypto.createHash('sha256').update(normalizedKey).digest('hex');
+  if (KNOWN_DEV_KEY_SHA256.has(keyHash) && !isLocalNetwork) {
+    throw new Error('Security Violation: Known Hardhat development private key cannot be used on non-local networks.');
+  }
 }
 
 const config = {

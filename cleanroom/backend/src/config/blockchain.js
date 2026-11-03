@@ -83,13 +83,15 @@ function reconfigureBlockchain({ rpcUrl, contractAddress, deployerPrivateKey }) 
   } else if (rpcUrl && (rpcUrl.includes('127.0.0.1') || rpcUrl.includes('localhost'))) {
     signer = provider.getSigner(0);
   }
-  if (contractAddress) {
+  if (contractAddress !== undefined) {
     currentContractAddress = contractAddress;
   }
   loadContractArtifact();
   const executor = signer || provider;
   if (currentContractAddress && ethers.utils.isAddress(currentContractAddress) && contractABI) {
     contractInstance = new ethers.Contract(currentContractAddress, contractABI, executor);
+  } else {
+    contractInstance = null;
   }
   return getBlockchainContext();
 }

@@ -51,11 +51,11 @@
 | **Authorship & Provenance** | **100% Independently Authored** by Saqib Ahmad Bhat | Upstream Certiport baseline by Alwin James (Remediated) |
 | **Smart Contract** | `EmertechCertificateRegistry.sol` (Solidity ^0.8.20, gas-packed structs, custom errors, $O(1)$ mapping) | `CertificateRegistry.sol` (Solidity ^0.8.19, string lookup with SHA-256 hash patch) |
 | **Contract Unit Tests** | **14 / 14 Passing** (Deployment, Auth, Duplicate, Revocation) | 9 / 9 Passing |
-| **Backend Integration Tests** | **19 / 19 Passing on Live EVM Node** (NIST KAT, real on-chain transactions, 4 verification modes, OCR fixture) | 18 / 18 Passing (Legacy routes & templates) |
+| **Backend Integration Tests** | **25 / 25 Passing on Live EVM Node** (NIST KAT, institutional signing, on-chain authorization, suspension transitions, 4 verification modes, OCR fixture) | 18 / 18 Passing (Legacy routes & templates) |
 | **PDF Generation Engine** | **Pure Vector Memory Compilation** via `pdf-lib` (Zero Chromium overhead) | Headless Chromium via Puppeteer (High RAM overhead) |
 | **Frontend Framework** | **React 19** with custom glassmorphism & original SVG branding | React 18 with legacy dashboard layouts |
 | **Storage & Persistence** | Dual-mode: Content-Addressed Local FS + IPFS Pinata adapter | Local uploads directory + Pinata API |
-| **Automated Fallbacks** | Auto in-memory MongoDB (`mongodb-memory-server`) + local fallback provider | Requires live external MongoDB & local Hardhat node |
+| **Automated Fallbacks** | Auto in-memory MongoDB (`mongodb-memory-server`) + offline demonstration mode (`OFFCHAIN_DEMO`) | Requires live external MongoDB & local Hardhat node |
 
 ---
 
@@ -64,7 +64,7 @@
 The clean-room v2.0 implementation is completely self-contained within the `cleanroom/` directory.
 
 ### 1. Execute All Automated Tests
-Run the clean-room test suite (14 smart contract tests + 19 backend integration tests executed on a live local EVM node):
+Run the clean-room test suite (14 smart contract tests + 25 backend integration tests executed on a live local EVM node):
 
 ```bash
 # Clone the repository

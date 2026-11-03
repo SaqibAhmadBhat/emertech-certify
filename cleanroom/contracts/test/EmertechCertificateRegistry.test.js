@@ -8,9 +8,10 @@ describe("EmertechCertificateRegistry (Clean-Room Architecture)", function () {
   let unauthorizedUser;
   let student;
 
-  const sampleHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("CERTv2|GCE|SAQIB|BE_CSE|2026-05"));
-  const sampleHash2 = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("CERTv2|GCE|STUDENT2|BE_ECE|2026-05"));
-  const recipientHash = ethers.utils.id("950020104001");
+  // Genuine NIST SHA-256 Cryptographic Digests (NOT Keccak-256)
+  const sampleHash = ethers.utils.sha256(ethers.utils.toUtf8Bytes("CERTv2|AIT|JANE_DOE|STU-2026-0042|BS_CS|2026-05"));
+  const sampleHash2 = ethers.utils.sha256(ethers.utils.toUtf8Bytes("CERTv2|AIT|JOHN_SMITH|STU-2026-0043|BS_EE|2026-05"));
+  const recipientHash = ethers.utils.sha256(ethers.utils.toUtf8Bytes("STU-2026-0042:salted_secret_salt_128b"));
   const metadataURI = "ipfs://QmCleanRoomSampleHash123456789";
 
   beforeEach(async function () {
@@ -34,26 +35,26 @@ describe("EmertechCertificateRegistry (Clean-Room Architecture)", function () {
 
     it("Should allow the owner to authorize an academic institution", async function () {
       await expect(
-        registry.setInstitutionStatus(university.address, "Govt College of Engg Tirunelveli", "gce.edu", 2)
+        registry.setInstitutionStatus(university.address, "Apex Institute of Technology", "apex.edu.test", 2)
       )
         .to.emit(registry, "InstitutionStatusUpdated")
-        .withArgs(university.address, 2, "Govt College of Engg Tirunelveli", (val) => val > 0);
+        .withArgs(university.address, 2, "Apex Institute of Technology", (val) => val > 0);
 
       const inst = await registry.getInstitution(university.address);
       expect(inst.status).to.equal(2);
-      expect(inst.name).to.equal("Govt College of Engg Tirunelveli");
+      expect(inst.name).to.equal("Apex Institute of Technology");
     });
 
     it("Should prevent non-owners from updating institution authorization", async function () {
       await expect(
-        registry.connect(unauthorizedUser).setInstitutionStatus(university.address, "Fake Univ", "fake.edu", 2)
+        registry.connect(unauthorizedUser).setInstitutionStatus(university.address, "Unaccredited Entity", "unaccredited.edu", 2)
       ).to.be.revertedWithCustomError(registry, "OnlyContractOwnerAllowed");
     });
   });
 
   describe("2. Certificate Registration & Hashing", function () {
     beforeEach(async function () {
-      await registry.setInstitutionStatus(university.address, "Govt College of Engg Tirunelveli", "gce.edu", 2);
+      await registry.setInstitutionStatus(university.address, "Apex Institute of Technology", "apex.edu.test", 2);
     });
 
     it("Should permit an authorized institution to register a certificate", async function () {
@@ -89,7 +90,7 @@ describe("EmertechCertificateRegistry (Clean-Room Architecture)", function () {
 
   describe("3. Verification State & Diagnostics", function () {
     beforeEach(async function () {
-      await registry.setInstitutionStatus(university.address, "Govt College of Engg Tirunelveli", "gce.edu", 2);
+      await registry.setInstitutionStatus(university.address, "Apex Institute of Technology", "apex.edu.test", 2);
       await registry.connect(university).registerCertificate(sampleHash, recipientHash, metadataURI);
     });
 
@@ -113,7 +114,7 @@ describe("EmertechCertificateRegistry (Clean-Room Architecture)", function () {
 
   describe("4. Revocation Lifecycle", function () {
     beforeEach(async function () {
-      await registry.setInstitutionStatus(university.address, "Govt College of Engg Tirunelveli", "gce.edu", 2);
+      await registry.setInstitutionStatus(university.address, "Apex Institute of Technology", "apex.edu.test", 2);
       await registry.connect(university).registerCertificate(sampleHash, recipientHash, metadataURI);
     });
 
