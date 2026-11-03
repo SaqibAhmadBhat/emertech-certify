@@ -84,12 +84,18 @@ class CertificateController {
 
   static async getStudentCertificates(req, res, next) {
     try {
-      const studentIdentifier = req.user.studentIdentifier;
-      if (!studentIdentifier) {
-        return res.status(400).json({ success: false, message: 'No student identifier associated with account.' });
+      const { studentIdentifier, institutionCode } = req.user;
+      if (!studentIdentifier || !institutionCode) {
+        return res.status(403).json({
+          success: false,
+          message: 'Account identity unverified: You must claim your institutional enrollment using an institution-issued token before accessing student academic records.'
+        });
       }
 
-      const certificates = await Certificate.find({ studentIdentifier }).sort({ issuedAt: -1 });
+      const certificates = await Certificate.find({
+        studentIdentifier,
+        institutionCode: institutionCode.toUpperCase()
+      }).sort({ issuedAt: -1 });
 
       res.status(200).json({
         success: true,

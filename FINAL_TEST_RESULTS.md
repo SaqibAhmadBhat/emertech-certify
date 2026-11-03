@@ -6,7 +6,7 @@
 **Department**: Computer Science and Engineering  
 **Academic Context**: AI and Blockchain Engineer Intern Demonstration, Emertech Innovations Private Limited  
 **Audit Execution Date**: November 2026  
-**Test Suite Status**: **100% PASSING (48 / 48 Automated Tests Passing, 0 Failures, 0 Skips)**  
+**Test Suite Status**: **100% PASSING (51 / 51 Automated Tests Passing, 0 Failures, 0 Skips)**  
 
 ---
 
@@ -19,10 +19,10 @@
   Category                              Target      Passed    Failed   Skipped
   ──────────────────────────────────────────────────────────────────────────────
   Smart Contract Unit Tests (Hardhat)       14          14         0         0
-  Backend Integration Tests (Live EVM)      34          34         0         0
+  Backend Integration Tests (Live EVM)      37          37         0         0
   Frontend Production Build (React 19)       1           1         0         0
   ──────────────────────────────────────────────────────────────────────────────
-  TOTAL AUTOMATED VALIDATION SUITE          49          49         0         0
+  TOTAL AUTOMATED VALIDATION SUITE          52          52         0         0
   SUCCESS RATE: 100.0%
 ================================================================================
 ```
@@ -59,12 +59,12 @@ cd cleanroom/contracts && npx hardhat test
       ✔ Should prevent unauthorized third parties from revoking certificates (42ms)
       ✔ Should reject revoking an already revoked certificate (40ms)
 
-  14 passing (780ms)
+  14 passing (791ms)
 ```
 
 ---
 
-## 3. Backend Integration Suite with Live EVM Consensus (34/34 Passing)
+## 3. Backend Integration Suite with Live EVM Consensus (37/37 Passing)
 
 Executed in `cleanroom/backend` against an active, live local Hardhat EVM node with real mined transactions, real cryptographic checks, and full multi-tenant isolation:
 
@@ -80,11 +80,11 @@ cd cleanroom/backend && npm test
 🔗 On-Chain Consensus: Real Local Hardhat EVM Execution
 ================================================================
 [Database] External MongoDB connection unavailable. Initializing embedded in-memory MongoDB...
-[Database] Embedded in-memory MongoDB started at mongodb://127.0.0.1:49669/
+[Database] Embedded in-memory MongoDB started at mongodb://127.0.0.1:14448/
 [Blockchain Setup] Local Hardhat node not detected on http://127.0.0.1:8545. Spawning local Hardhat node...
 [Blockchain Setup] Local Hardhat node started successfully.
 [Blockchain Setup] EmertechCertificateRegistry deployed to: 0x5FbDB2315678afecb367f032d93F642f64180aa3
-[Test Server] Live on ephemeral port 55199
+[Test Server] Live on ephemeral port 55696
 
 1. Testing System Health Check (/api/v2/health)...
    ✅ Health check verified.
@@ -92,12 +92,14 @@ cd cleanroom/backend && npm test
 2. Testing SHA-256 Known-Answer Tests (NIST FIPS 180-4) & Keccak Distinction...
    ✅ NIST Known-Answer Tests passed. SHA-256 verified distinct from Keccak-256.
 
-3. Testing One-Time Super Administrator Bootstrap via CLI Logic...
-[Bootstrap] Successfully created Super Administrator: governance.admin@emertech-test.internal (ID: 6aea35621d35b30b30a213b5)
-   ✅ Super Administrator bootstrapped and authenticated successfully.
+2B. Testing KeyVault Cryptographic Invariants & Tamper Resistance...
+   ✅ KeyVault PBKDF2/AES-256-GCM cryptography and tamper-resistance invariants verified.
 
-4. Testing Enforcement of One-Time Bootstrap Invariant...
-[Bootstrap] One-time setup already completed. Found 1 existing SUPER_ADMIN account(s). Action aborted.
+3. Testing One-Time Super Administrator Bootstrap via CLI Logic & Password Policy...
+[Bootstrap] Successfully created Super Administrator: governance.admin@emertech-test.internal (ID: 6aea3e5d5937dfb8dcee0461)
+   ✅ Super Administrator password policy enforced and authenticated successfully.
+
+4. Testing Enforcement of One-Time Bootstrap Invariant & Atomic Database Guard...
    ✅ One-time bootstrap invariant enforced: Multiple bootstrap attempts safely rejected.
 
 5. Testing Prevention of Privilege Escalation: Rejection of SUPER_ADMIN...
@@ -106,8 +108,8 @@ cd cleanroom/backend && npm test
 6. Testing Prevention of Privilege Escalation: Rejection of INSTITUTION_ADMIN...
    ✅ Privilege escalation prevented: INSTITUTION_ADMIN self-registration rejected with 403 Forbidden.
 
-7. Testing Public Registration Least-Privilege STUDENT Role Defaults...
-   ✅ Public registration enforced least-privilege STUDENT account.
+7. Testing Public Registration Least-Privilege STUDENT Role & Identity Separation...
+   ✅ Public registration enforced least-privilege STUDENT account with identity verification barrier.
 
 8. Testing Academic Institution Application Queue...
    ✅ Institution application queued.
@@ -121,7 +123,7 @@ cd cleanroom/backend && npm test
 11. Testing Handling of Unavailable Blockchain During Authorization...
    ✅ Blockchain unavailability handled safely; institution remains unapproved on-chain.
 
-12. Testing Institution Status Transition to SUSPENDED...
+12. Testing Institution Status Transition to SUSPENDED & Failure Invariant...
    ✅ Institution successfully suspended on-chain (status = 3) and off-chain.
 
 13. Testing Prevention of Issuance by Suspended Institution...
@@ -142,18 +144,24 @@ cd cleanroom/backend && npm test
 18. Testing Negative RBAC: Student Blocked from Certificate Issuance...
    ✅ Student certificate issuance blocked with 403 Forbidden.
 
+18B. Testing Student Enrollment Token Generation & Identity Claiming...
+   ✅ Student enrollment token generation, cryptographic claim, and access authorization verified.
+
 19. Testing Persistent Key Custody (AES-256-GCM via PBKDF2 & Database Signer)...
    ✅ Key vault encrypted storage, DB retrieval, and cryptographic signing verified.
 
 20. Testing Certificate Issuance Signed by Institution & Real On-Chain Anchoring...
    ✅ Certificate anchored on-chain with confirmed EVM transaction!
-      ID:     AIT-MW12WID1-0042
-      Hash:   0x0c786bbb7d7dc90a476cb67f77b75d49bc5e3d9c18d9ab065b3d7500faadd0e6
-      TxHash: 0xa6386067a966bf3d28cc5fd27914d54e71f118cb54b07e66f1894dfd52065647
+      ID:     AIT-MW149SWM-0042
+      Hash:   0x1778630cf11e9a49a705f97ab699548fe8671a3589ea7099737158e838caad21
+      TxHash: 0x8b7508e618f90e149f4ecd992024c1b17d9e182518f94850a80708c0d6a46761
       Issuer: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 (Verified Matches Institution Wallet)
 
+20B. Testing Real Persistent Institutional Key Custody & EVM Issuance (Non-RPC Wallet)...
+   ✅ Real persistent institutional key custody verified: Decrypted non-RPC key signed EVM transaction.
+
 21. Testing Vector PDF Download Endpoint...
-   ✅ Vector PDF downloaded successfully (5228 bytes).
+   ✅ Vector PDF downloaded successfully (5121 bytes).
 
 22. Testing Mode 1: Public Verification by Hash with On-Chain Issuer Display...
    ✅ Mode 1 Verified: Status = AUTHENTIC (onChainVerified: true, issuer matches institution).
@@ -173,9 +181,9 @@ cd cleanroom/backend && npm test
 27. Testing Negative RBAC: Institution Admin Forbidden from Cross-Institution Revocation...
    ✅ Multi-tenant isolation verified: Cross-institution revocation rejected with 403 Forbidden.
 
-28. Testing Real On-Chain Certificate Revocation by Issuing Institution...
+28. Testing Real On-Chain Certificate Revocation & Blockchain Failure Invariant...
    ✅ Certificate revoked via real mined smart contract transaction by issuing institution.
-      Revocation TxHash: 0x96f10f4df838da5ecbc2bbd4e077ddf6a0a0f8cbdad358bdad9b1a9f45e4cd5d
+      Revocation TxHash: 0xc6c7fae3f68d3d7db9b268779f9449fd043a8ddb1e9d74920b4ebf64ba7a34f9
 
 29. Testing Prevention of Unauthorized Revocation by Student...
    ✅ Unauthorized revocation rejected with 403 Forbidden.
@@ -183,7 +191,7 @@ cd cleanroom/backend && npm test
 30. Testing Public Verification of Revoked Credential...
    ✅ Revocation confirmed: Status = REVOKED directly from smart contract.
 
-31. Testing Mode 4: Tesseract.js Neural OCR Image Extraction (Synthetic Fixture)...
+31. Testing Mode 4: Tesseract.js WebAssembly OCR Image Extraction (Synthetic Fixture)...
    ✅ Mode 4 Verified: Tesseract.js OCR successfully extracted entities from synthetic fixture.
 
 32. Testing File Upload Magic Byte Enforcement (Rejection of Non-PDF & Non-Image)...
@@ -199,7 +207,7 @@ cd cleanroom/backend && npm test
 
 ================================================================
 📊 CLEAN-ROOM v2.0 TEST EXECUTION SUMMARY:
-   Passed:  34
+   Passed:  37
    Failed:  0
    Skipped: 0
 ================================================================
@@ -226,7 +234,7 @@ Compiled successfully.
 
 File sizes after gzip:
 
-  109.99 kB  build/static/js/main.66875715.js
+  110.52 kB  build/static/js/main.536fb81b.js
   1.94 kB    build/static/css/main.67b0325b.css
 
 The project was built assuming it is hosted at /.
@@ -243,16 +251,18 @@ The build folder is ready to be deployed.
 | :--- | :--- | :--- |
 | **System & Health** | Test 1 | Endpoint uptime, developer attribution, build metadata |
 | **NIST Cryptography** | Test 2 | FIPS 180-4 Known-Answer Tests, SHA-256 vs Keccak separation |
-| **Identity & Genesis** | Tests 3–4 | One-time CLI Super Admin bootstrap, second bootstrap rejection |
-| **Authentication & RBAC**| Tests 5–7, 18 | Rejection of administrative privilege escalation, student least privilege |
-| **Institutional Governance**| Tests 8–14, 16–17 | University onboarding, on-chain accreditation, invalid wallet rejection, offline handling, suspension |
+| **KeyVault Cryptography** | Test 2B | PBKDF2 (100,000 rounds), AES-256-GCM, unique salt/IV, tamper resistance, AAD binding |
+| **Identity & Genesis** | Tests 3–4 | Super Admin bootstrap with strict password policy (min 12 chars), duplicate rejection, atomic unique partial index |
+| **Authentication & Least Privilege**| Tests 5–7 | Rejection of administrative self-registration, rejection of self-asserted student ID/institution code |
+| **Institutional Governance**| Tests 8–14, 16–17 | University onboarding, on-chain accreditation, invalid wallet rejection, offline handling, suspension failure invariant |
 | **Admin Provisioning** | Tests 15–17 | Super Admin provisioning of Institution Admins with strict accreditation preconditions |
-| **Key Custody & KMS** | Test 19 | PBKDF2 vault key derivation, AES-256-GCM encryption, persistent DB custody, message signing |
+| **Student Enrollment Lifecycle** | Test 18B | Cryptographic enrollment token generation, student identity claiming, duplicate rejection, refreshed JWT |
+| **Persistent Key Custody & KMS** | Tests 19, 20B | Persistent MongoDB AES-256-GCM custody, derivation verification, memory cache reset, non-RPC EVM transaction signing |
 | **Document Synthesis** | Tests 20–21 | Vector PDF compilation, embedded QR code generation, binary streaming |
 | **Public Verification** | Tests 22–25 | Mode 1 (Hash), Mode 2 (PDF file), Mode 3 (QR code), tamper detection |
-| **Student Transcripts** | Test 26 | Student record retrieval, privacy isolation |
-| **Revocation Governance**| Tests 27–30 | Cross-tenant isolation, on-chain mined revocation, public status update |
-| **Neural AI OCR** | Test 31 | Tesseract.js WebAssembly OCR parsing synthetic certificate fixture |
+| **Student Transcripts** | Test 26 | Student record retrieval, privacy isolation, verified identity precondition |
+| **Revocation Governance**| Tests 27–30 | Cross-tenant isolation, revocation failure handling invariant, on-chain mined revocation, public status update |
+| **Tesseract.js OCR** | Test 31 | Tesseract.js WebAssembly OCR parsing synthetic certificate fixture |
 | **Application Defense** | Test 32 | File upload magic byte validation (`%PDF-`, PNG/JPEG) |
 | **Scalability & Metrics** | Tests 33–34 | Multi-student batch issuance, ecosystem telemetry aggregation |
 
@@ -260,8 +270,9 @@ The build folder is ready to be deployed.
 
 ## 6. Test Suite Certification
 
-I hereby certify that all 48 unit and integration tests and the React 19 production build execute successfully with zero failures and zero skipped tests against a real local EVM blockchain node.
+I hereby certify that all 51 automated unit and integration tests and the React 19 production build execute successfully with zero failures and zero skipped tests against a real local EVM blockchain node.
 
 **Saqib Ahmad Bhat**  
 Lead Architect & Developer  
-Government College of Engineering, Tirunelveli
+Government College of Engineering, Tirunelveli  
+Emertech Innovations Private Limited

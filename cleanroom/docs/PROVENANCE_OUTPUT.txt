@@ -3,14 +3,14 @@ EMERTECH CERTIFY CLEAN-ROOM PROVENANCE & SIMILARITY AUDIT REPORT
 Lead Architect: Saqib Ahmad Bhat
 Institution: Government College of Engineering, Tirunelveli
 ================================================================================
-Clean-Room Files Analyzed:       68
+Clean-Room Files Analyzed:       69
 Legacy Files Analyzed:           79
 Exact File Matches Detected:     0
-Files with 3-Line Boilerplate:   14
+Files with 3-Line Boilerplate:   15
 Potentially Significant (5+ l):  3
 
 --- OVERLAP CLASSIFICATION BREAKDOWN ---
-  • Syntactic Programming Idiom: 17 occurrences
+  • Syntactic Programming Idiom: 18 occurrences
   • Package / Manifest Metadata: 11 occurrences
   • Framework Import / CommonJS Export Boilerplate: 7 occurrences
   • CSS Reset / Layout Style Utility: 4 occurrences
@@ -20,14 +20,14 @@ Potentially Significant (5+ l):  3
 --- DETAILED BLOCK-LEVEL OVERLAP INVENTORY ---
 
 File: cleanroom/backend/package.json (9 matching 3-line blocks)
-   [Syntactic Programming Idiom]
-   Block: "pdf-lib": "^1.17.1", / "pdf-parse": "^1.1.1", / "pngjs": "^7.0.0",
+   [Framework Import / CommonJS Export Boilerplate]
+   Block: "express": "^4.18.2", / "jsonwebtoken": "^9.0.2", / "jsqr": "^1.4.0",
    Legacy: backend/package.json
    [Syntactic Programming Idiom]
-   Block: "jsonwebtoken": "^9.0.2", / "jsqr": "^1.4.0", / "mongoose": "^7.5.2",
+   Block: "jsqr": "^1.4.0", / "mongoose": "^7.5.2", / "multer": "^1.4.5-lts.1",
    Legacy: backend/package.json
    [Syntactic Programming Idiom]
-   Block: "mongoose": "^7.5.2", / "multer": "^1.4.5-lts.1", / "pdf-lib": "^1.17.1",
+   Block: "bcryptjs": "^2.4.3", / "cors": "^2.8.5", / "dotenv": "^16.3.1",
    Legacy: backend/package.json
 
 File: cleanroom/backend/src/app.js (1 matching 3-line blocks)
@@ -52,21 +52,21 @@ File: cleanroom/backend/test/cleanroom.api.test.js (1 matching 3-line blocks)
 
 File: cleanroom/contracts/package.json (3 matching 3-line blocks)
    [Package / Manifest Metadata]
-   Block: "scripts": { / "compile": "hardhat compile", / "test": "hardhat test",
-   Legacy: contracts/package.json
-   [Package / Manifest Metadata]
    Block: "author": "Saqib Ahmad Bhat", / "license": "MIT", / "scripts": {
    Legacy: contracts/package.json
    [Package / Manifest Metadata]
    Block: "license": "MIT", / "scripts": { / "compile": "hardhat compile",
    Legacy: contracts/package.json
+   [Package / Manifest Metadata]
+   Block: "scripts": { / "compile": "hardhat compile", / "test": "hardhat test",
+   Legacy: contracts/package.json
 
 File: cleanroom/contracts/scripts/deploy.js (2 matching 3-line blocks)
    [Framework Import / CommonJS Export Boilerplate]
-   Block: const hre = require("hardhat"); / const fs = require("fs"); / const path = require("path");
+   Block: const fs = require("fs"); / const path = require("path"); / async function main() {
    Legacy: contracts/scripts/deploy.js
    [Framework Import / CommonJS Export Boilerplate]
-   Block: const fs = require("fs"); / const path = require("path"); / async function main() {
+   Block: const hre = require("hardhat"); / const fs = require("fs"); / const path = require("path");
    Legacy: contracts/scripts/deploy.js
 
 File: cleanroom/contracts/test/EmertechCertificateRegistry.test.js (2 matching 3-line blocks)
@@ -79,13 +79,13 @@ File: cleanroom/contracts/test/EmertechCertificateRegistry.test.js (2 matching 3
 
 File: cleanroom/frontend/package.json (9 matching 3-line blocks)
    [Package / Manifest Metadata]
-   Block: "development": [ / "last 1 chrome version", / "last 1 firefox version",
-   Legacy: frontend/certiport-frontend/package.json
-   [Syntactic Programming Idiom]
-   Block: "production": [ / "not dead", / "not op_mini all"
+   Block: "react": "^19.1.1", / "react-dom": "^19.1.1", / "react-router-dom": "^6.14.1",
    Legacy: frontend/certiport-frontend/package.json
    [Package / Manifest Metadata]
-   Block: "lucide-react": "^0.544.0", / "react": "^19.1.1", / "react-dom": "^19.1.1",
+   Block: "scripts": { / "start": "react-scripts start", / "build": "react-scripts build",
+   Legacy: frontend/certiport-frontend/package.json
+   [Package / Manifest Metadata]
+   Block: "not op_mini all" / "development": [ / "last 1 chrome version",
    Legacy: frontend/certiport-frontend/package.json
 
 File: cleanroom/frontend/public/index.html (1 matching 3-line blocks)
@@ -101,16 +101,21 @@ File: cleanroom/frontend/src/App.js (2 matching 3-line blocks)
    Block: import Footer from './components/Footer'; / import ProtectedRoute from './components/ProtectedRoute'; / import LandingPage from './pages/LandingPage';
    Legacy: frontend/certiport-frontend/src/App.js
 
+File: cleanroom/frontend/src/pages/StudentDashboard.js (1 matching 3-line blocks)
+   [Syntactic Programming Idiom]
+   Block: type="text" / className="form-input" / placeholder="e.g. 950020104001"
+   Legacy: frontend/certiport-frontend/src/pages/Register.js, frontend/certiport-frontend/src/pages/UniversityDashboard.js
+
 File: cleanroom/frontend/src/styles/main.css (7 matching 3-line blocks)
-   [Syntactic Programming Idiom]
-   Block: display: flex; / align-items: center; / justify-content: space-between;
-   Legacy: frontend/certiport-frontend/src/styles/Navbar.css, frontend/certiport-frontend/src/styles/NavbarFooter.css
-   [Syntactic Programming Idiom]
-   Block: flex-direction: column; / min-height: 100vh; / .main-content {
-   Legacy: frontend/certiport-frontend/src/styles/theme.css
+   [CSS Reset / Layout Style Utility]
+   Block: max-width: 1240px; / width: 100%; / margin: 0 auto;
+   Legacy: frontend/certiport-frontend/src/styles/NavbarFooter.css
    [Syntactic Programming Idiom]
    Block: display: flex; / flex-direction: column; / min-height: 100vh;
    Legacy: frontend/certiport-frontend/src/styles/theme.css
+   [CSS Reset / Layout Style Utility]
+   Block: background: transparent; / border: none; / cursor: pointer;
+   Legacy: frontend/certiport-frontend/src/styles/Dashboards.css
 
 File: cleanroom/frontend/src/styles/theme.css (1 matching 3-line blocks)
    [CSS Reset / Layout Style Utility]

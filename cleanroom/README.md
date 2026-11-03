@@ -66,7 +66,7 @@ To enable seamless evaluation in offline or air-gapped environments:
 # 1. Enter cleanroom directory
 cd cleanroom
 
-# 2. Run the complete test suite (14 contract tests + 34 backend integration tests on live EVM ledger)
+# 2. Run the complete test suite (14 contract tests + 37 backend integration tests on live EVM ledger)
 npm run test:all
 ```
 
@@ -92,7 +92,7 @@ npm run test:all
       ✔ Should prevent unauthorized third parties from revoking certificates
       ✔ Should reject revoking an already revoked certificate
 
-  14 passing (674ms)
+  14 passing (791ms)
 
 ================================================================
 🧪 EMERTECH CERTIFY CLEAN-ROOM v2.0 INTEGRATION TEST SUITE
@@ -101,24 +101,27 @@ npm run test:all
 ================================================================
 1. Testing System Health Check (/api/v2/health)...            ✅ Verified.
 2. Testing SHA-256 NIST Known-Answer Tests & Keccak...       ✅ Verified.
-3. Testing One-Time Super Admin Bootstrap via CLI Logic...   ✅ Verified.
-4. Testing Enforcement of One-Time Bootstrap Invariant...    ✅ Verified.
+2B. Testing KeyVault Cryptographic Invariants...             ✅ Verified (PBKDF2/AES-256-GCM).
+3. Testing One-Time Super Admin Bootstrap via CLI Logic...   ✅ Verified (Password Policy Enforced).
+4. Testing Enforcement of One-Time Bootstrap Invariant...    ✅ Verified (Atomic Index Guard).
 5. Testing Privilege Escalation Rejection (SUPER_ADMIN)...   ✅ Verified (403 Forbidden).
 6. Testing Privilege Escalation Rejection (INST_ADMIN)...    ✅ Verified (403 Forbidden).
-7. Testing Public Registration Least-Privilege STUDENT...    ✅ Verified.
+7. Testing Public Registration Least-Privilege STUDENT...    ✅ Verified (Identity Barrier Enforced).
 8. Testing Academic Institution Application Queue...         ✅ Verified.
 9. Testing Super Admin Approval & On-Chain Status...         ✅ Verified.
 10. Testing Rejection of Invalid Wallet Authorization...      ✅ Verified.
 11. Testing Handling of Unavailable Blockchain (502)...       ✅ Verified.
-12. Testing Institution Status Transition to SUSPENDED...     ✅ Verified.
+12. Testing Institution Status Transition to SUSPENDED...     ✅ Verified (Failure Invariant Verified).
 13. Testing Prevention of Issuance by Suspended Inst...       ✅ Verified (403 Forbidden).
 14. Testing Restoration of Institution to AUTHORIZED...      ✅ Verified.
 15. Testing Protected Institution Admin Provisioning...       ✅ Verified (Super Admin Only).
 16. Testing Prevention of Admin Provisioning by Student...   ✅ Verified (403 Forbidden).
 17. Testing Provisioning Guard for Unaccredited Inst...      ✅ Verified (400 Bad Request).
 18. Testing Negative RBAC: Student Blocked from Issuance...  ✅ Verified (403 Forbidden).
+18B. Testing Student Enrollment Token Generation & Claim...   ✅ Verified (Cryptographic Claim).
 19. Testing Persistent Key Custody (AES-256-GCM / PBKDF2)... ✅ Verified (DB Signer Resolution).
 20. Testing Certificate Issuance & Real EVM Anchoring...     ✅ Verified (TxHash mined, issuer verified).
+20B. Testing Real Persistent Institutional Key Custody...     ✅ Verified (Non-RPC Decrypted Key Signer).
 21. Testing Vector PDF Download Endpoint...                  ✅ Verified.
 22. Testing Mode 1: Public Verification by Hash...          ✅ Verified (onChain: true, issuer matches).
 23. Testing Mode 2: Verification by PDF Upload...           ✅ Verified (onChain: true).
@@ -126,17 +129,17 @@ npm run test:all
 25. Testing Mode 3: QR Code Payload Verification...         ✅ Verified.
 26. Testing Student Credential Retrieval...                 ✅ Verified.
 27. Testing Multi-Tenant Revocation Isolation (RBAC)...      ✅ Verified (403 Forbidden).
-28. Testing Real On-Chain Certificate Revocation...         ✅ Verified (TxHash mined).
+28. Testing Real On-Chain Certificate Revocation...         ✅ Verified (Failure Invariant & Mined Tx).
 29. Testing Prevention of Unauthorized Revocation...         ✅ Verified (403 Forbidden).
 30. Testing Public Verification of Revoked Credential...    ✅ Verified.
-31. Testing Mode 4: Tesseract.js Neural OCR (Synthetic)...  ✅ Verified.
+31. Testing Mode 4: Tesseract.js WebAssembly OCR...          ✅ Verified.
 32. Testing File Upload Magic Byte Enforcement...           ✅ Verified (400 Bad Request).
 33. Testing Batch Certificate Issuance (Real EVM)...        ✅ Verified.
 34. Testing Super Admin Telemetry & Governance...           ✅ Verified.
 
 ================================================================
 📊 CLEAN-ROOM v2.0 TEST EXECUTION SUMMARY:
-   Passed:  34
+   Passed:  37
    Failed:  0
    Skipped: 0
 ================================================================

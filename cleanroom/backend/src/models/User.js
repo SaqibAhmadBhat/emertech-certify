@@ -44,6 +44,12 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Atomic database guard: exactly ONE Super Administrator can ever exist in the database
+userSchema.index(
+  { role: 1 },
+  { unique: true, partialFilterExpression: { role: 'SUPER_ADMIN' } }
+);
+
 userSchema.methods.comparePassword = async function (plainPassword) {
   return bcrypt.compare(plainPassword, this.passwordHash);
 };

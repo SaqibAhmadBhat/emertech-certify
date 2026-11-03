@@ -8,10 +8,7 @@ export default function RegisterPage({ onLoginSuccess }) {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    password: '',
-    role: 'STUDENT',
-    institutionCode: 'GCE',
-    studentIdentifier: ''
+    password: ''
   });
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -22,18 +19,17 @@ export default function RegisterPage({ onLoginSuccess }) {
     setErrorMsg('');
 
     try {
-      const res = await axios.post('/api/v2/auth/register', formData);
+      const res = await axios.post('/api/v2/auth/register', {
+        fullName: formData.fullName.trim(),
+        email: formData.email.trim(),
+        password: formData.password
+      });
       const { token, user } = res.data;
 
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       onLoginSuccess(user);
-
-      if (user.role === 'INSTITUTION_ADMIN') {
-        navigate('/institution');
-      } else {
-        navigate('/student');
-      }
+      navigate('/student');
     } catch (err) {
       setErrorMsg(err.response?.data?.message || 'Registration failed.');
     } finally {
@@ -101,42 +97,17 @@ export default function RegisterPage({ onLoginSuccess }) {
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Account Role:</label>
-            <select
-              className="form-select"
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-            >
-              <option value="STUDENT">Student / Graduate</option>
-              <option value="INSTITUTION_ADMIN">Academic Institution Administrator</option>
-            </select>
+          <div style={{
+            background: 'rgba(56, 189, 248, 0.08)',
+            border: '1px solid rgba(56, 189, 248, 0.2)',
+            borderRadius: '6px',
+            padding: '0.75rem',
+            fontSize: '0.8rem',
+            color: '#94A3B8',
+            marginBottom: '1rem'
+          }}>
+            <strong style={{ color: '#38BDF8' }}>Student Least-Privilege Registration:</strong> Public registration provisions student accounts. You can link your official university enrollment in your student portal using your institution-issued verification token.
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Institution Code:</label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.institutionCode}
-              onChange={(e) => setFormData({ ...formData, institutionCode: e.target.value.toUpperCase() })}
-              placeholder="GCE"
-            />
-          </div>
-
-          {formData.role === 'STUDENT' && (
-            <div className="form-group">
-              <label className="form-label">Registration / Roll Identifier:</label>
-              <input
-                type="text"
-                className="form-input"
-                required
-                value={formData.studentIdentifier}
-                onChange={(e) => setFormData({ ...formData, studentIdentifier: e.target.value })}
-                placeholder="950020104001"
-              />
-            </div>
-          )}
 
           <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%', marginTop: '0.5rem' }}>
             {loading ? 'Registering Account...' : 'Register Account'}

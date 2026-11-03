@@ -43,7 +43,7 @@ jobs:
   # PRIMARY JOB 2: Backend Integration Tests with Real Local Blockchain
   # =========================================================================
   backend:
-    name: Backend API Integration Tests (Real EVM Consensus)
+    name: Backend API Integration Tests (Local Hardhat EVM Integration)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -83,7 +83,7 @@ jobs:
           cd cleanroom/backend
           npm ci
 
-      - name: Run Backend Integration Suite on Live EVM (34/34 Tests Passing)
+      - name: Run Backend Integration Suite on Live EVM (37/37 Tests Passing)
         env:
           NODE_ENV: test
           BLOCKCHAIN_RPC_URL: http://127.0.0.1:8545

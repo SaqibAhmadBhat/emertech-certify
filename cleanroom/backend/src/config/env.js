@@ -21,15 +21,15 @@ if (!jwtSecret) {
 }
 
 // 2. Key Vault Secret Validation: strictly independent from JWT_SECRET
-let keyVaultSecret = process.env.KEY_VAULT_SECRET;
+let keyVaultSecret = process.env.KEY_VAULT_SECRET ? process.env.KEY_VAULT_SECRET.trim() : '';
 if (!keyVaultSecret) {
   if (isTestMode) {
     keyVaultSecret = crypto.randomBytes(32).toString('hex');
-  } else if (nodeEnv === 'production') {
-    throw new Error('Configuration Error: KEY_VAULT_SECRET environment variable is required in production.');
   } else {
-    keyVaultSecret = 'emertech_dev_vault_master_key_secret_2026_unrestricted';
+    throw new Error('Configuration Error: KEY_VAULT_SECRET environment variable is required. Please set a secure key (min 32 characters) in .env.');
   }
+} else if (keyVaultSecret.length < 32 && !isTestMode) {
+  throw new Error('Security Error: KEY_VAULT_SECRET must be at least 32 characters long.');
 }
 
 // 3. Private Key Validation: prevent development key on public networks via hash-based deny-list
