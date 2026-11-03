@@ -326,11 +326,7 @@ For the full line-by-line audit and empirical token analysis, refer to [`cleanro
 > - Saqib Ahmad Bhat **did not personally build** the enterprise production systems of Apollo Tyres or Sahyadri Farms; those are cited strictly as external industry context.  
 > - Saqib Ahmad Bhat does not claim original authorship of the historical upstream Certiport baseline. Upstream copyright and MIT licensing are preserved in full.
 
-### Upstream Foundation (Historical v1 Prototype)
-- **Project**: Certiport
-- **Original Author**: Alwin James
-- **Source Repository**: [https://github.com/J7-Alwin/Certiport](https://github.com/J7-Alwin/Certiport)
-- **License**: MIT License (Preserved in full in [LICENSE](LICENSE) and documented in [NOTICE.md](NOTICE.md))
+
 
 ---
 
