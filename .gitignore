@@ -14,6 +14,10 @@ build/
 **/build/
 dist/
 **/dist/
+artifacts/
+**/artifacts/
+cache/
+**/cache/
 contracts/artifacts/
 contracts/artifacts/**
 contracts/cache/
@@ -22,6 +26,9 @@ backend/uploads/
 backend/uploads/**
 frontend/certiport-frontend/build/
 frontend/certiport-frontend/build/**
+cleanroom/backend/storage/
+cleanroom/backend/storage/**
+cleanroom/contracts/deployments/
 
 # Operating System files
 .DS_Store

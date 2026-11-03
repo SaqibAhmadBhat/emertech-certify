@@ -1,0 +1,31 @@
+{
+  "name": "emertech-certify-cleanroom-backend",
+  "version": "2.0.0",
+  "description": "Emertech Certify Clean-Room Backend REST API Service",
+  "author": "Saqib Ahmad Bhat",
+  "license": "MIT",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node test/cleanroom.api.test.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "ethers": "^5.7.2",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "jsqr": "^1.4.0",
+    "mongoose": "^7.5.2",
+    "multer": "^1.4.5-lts.1",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^1.1.1",
+    "pngjs": "^7.0.0",
+    "qrcode": "^1.5.1",
+    "tesseract.js": "^5.1.1"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^9.1.6"
+  }
+}

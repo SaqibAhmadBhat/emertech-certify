@@ -1,0 +1,17 @@
+{
+  "name": "emertech-certify-cleanroom-contracts",
+  "version": "2.0.0",
+  "description": "Emertech Certify Clean-Room Smart Contracts (Solidity ^0.8.20)",
+  "author": "Saqib Ahmad Bhat",
+  "license": "MIT",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.19.4"
+  }
+}

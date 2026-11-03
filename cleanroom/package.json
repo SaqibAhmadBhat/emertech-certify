@@ -1,0 +1,16 @@
+{
+  "name": "emertech-certify-cleanroom",
+  "version": "2.0.0",
+  "description": "Emertech Certify — Clean-Room Independent Academic Verification Architecture",
+  "author": "Saqib Ahmad Bhat",
+  "license": "MIT",
+  "scripts": {
+    "test:contracts": "cd contracts && npx hardhat test",
+    "test:backend": "cd backend && node test/cleanroom.api.test.js",
+    "test:all": "cd contracts && npx hardhat test && cd ../backend && node test/cleanroom.api.test.js",
+    "compile:contracts": "cd contracts && npx hardhat compile",
+    "build:frontend": "cd frontend && CI=true npm run build",
+    "start:backend": "cd backend && node src/server.js",
+    "start:frontend": "cd frontend && npm start"
+  }
+}

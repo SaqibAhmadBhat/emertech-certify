@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you utilize Emertech Certify v2.0 in academic research or engineering evaluations, please cite it as below."
+authors:
+  - family-names: Bhat
+    given-names: Saqib Ahmad
+    affiliation: "Government College of Engineering, Tirunelveli - Department of Computer Science and Engineering"
+title: "Emertech Certify: AI-Assisted Blockchain-Based Academic Certificate Verification System (Clean-Room v2.0)"
+version: 2.0.0
+date-released: 2026-11-03
+url: "https://github.com/SaqibAhmadBhat/emertech-certify"
+repository-code: "https://github.com/SaqibAhmadBhat/emertech-certify"
+license: MIT
+keywords:
+  - clean-room-software-engineering
+  - blockchain-verification
+  - ethereum
+  - solidity
+  - academic-credentials
+  - ocr
+  - sha-256
+  - privacy-preserving
