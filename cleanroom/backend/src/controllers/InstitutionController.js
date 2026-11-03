@@ -60,7 +60,16 @@ class InstitutionController {
         return res.status(400).json({ success: false, message: 'Missing required student/academic fields.' });
       }
 
-      const institutionCode = req.user.institutionCode || 'INST';
+      if (req.user.role === 'INSTITUTION_ADMIN' && !req.user.institutionCode) {
+        return res.status(403).json({
+          success: false,
+          message: 'Forbidden: Institution administrator account is not linked to any institution.'
+        });
+      }
+
+      const institutionCode = req.user.role === 'INSTITUTION_ADMIN'
+        ? req.user.institutionCode
+        : (req.body.institutionCode || req.user.institutionCode || 'INST');
       const institutionName = req.user.institutionName || 'Accredited Academic Institution';
 
       // Verify Institution Authorization
@@ -187,7 +196,16 @@ class InstitutionController {
         return res.status(400).json({ success: false, message: 'Batch must be a non-empty array of students.' });
       }
 
-      const institutionCode = req.user.institutionCode || 'INST';
+      if (req.user.role === 'INSTITUTION_ADMIN' && !req.user.institutionCode) {
+        return res.status(403).json({
+          success: false,
+          message: 'Forbidden: Institution administrator account is not linked to any institution.'
+        });
+      }
+
+      const institutionCode = req.user.role === 'INSTITUTION_ADMIN'
+        ? req.user.institutionCode
+        : (req.body.institutionCode || req.user.institutionCode || 'INST');
       const institutionName = req.user.institutionName || 'Accredited Academic Institution';
 
       const institution = await Institution.findOne({ institutionCode: institutionCode.toUpperCase() });
@@ -303,7 +321,16 @@ class InstitutionController {
       // Determine revoker signing entity
       let revokerWallet = null;
       if (req.user.role === 'INSTITUTION_ADMIN') {
-        const institution = await Institution.findOne({ institutionCode: req.user.institutionCode });
+        if (!req.user.institutionCode) {
+          return res.status(403).json({ success: false, message: 'Forbidden: Institution administrator account is not linked to any institution.' });
+        }
+        if (certificate.institutionCode.toUpperCase() !== req.user.institutionCode.toUpperCase()) {
+          return res.status(403).json({
+            success: false,
+            message: 'Forbidden: You can only revoke certificates issued by your own institution.'
+          });
+        }
+        const institution = await Institution.findOne({ institutionCode: req.user.institutionCode.toUpperCase() });
         if (!institution) {
           return res.status(403).json({ success: false, message: 'Institution record not found for admin.' });
         }
@@ -363,8 +390,16 @@ class InstitutionController {
 
   static async listCertificates(req, res, next) {
     try {
-      const institutionCode = req.user.institutionCode || 'INST';
-      const certificates = await Certificate.find({ institutionCode }).sort({ issuedAt: -1 }).limit(100);
+      const query = {};
+      if (req.user.role === 'INSTITUTION_ADMIN') {
+        if (!req.user.institutionCode) {
+          return res.status(200).json({ success: true, count: 0, certificates: [] });
+        }
+        query.institutionCode = req.user.institutionCode.toUpperCase();
+      } else if (req.query.institutionCode) {
+        query.institutionCode = req.query.institutionCode.toUpperCase();
+      }
+      const certificates = await Certificate.find(query).sort({ issuedAt: -1 }).limit(100);
 
       res.status(200).json({
         success: true,

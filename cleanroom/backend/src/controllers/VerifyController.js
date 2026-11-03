@@ -108,6 +108,15 @@ class VerifyController {
       }
 
       const fileBuffer = file.buffer;
+
+      // Validate PDF magic bytes (%PDF-)
+      if (!fileBuffer.slice(0, 5).toString('ascii').startsWith('%PDF')) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid file format: Uploaded file does not have a valid PDF header signature.'
+        });
+      }
+
       const computedHash = CryptoService.computeSha256(fileBuffer);
       const { expectedCertificateId, expectedHash } = req.body;
 
@@ -273,6 +282,16 @@ class VerifyController {
     try {
       if (!req.file || !req.file.buffer) {
         return res.status(400).json({ success: false, message: 'No image file uploaded for OCR scan.' });
+      }
+
+      const buf = req.file.buffer;
+      const isPng = buf.length >= 8 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+      const isJpg = buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+      if (!isPng && !isJpg) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid image format: File header must match PNG or JPEG signature.'
+        });
       }
 
       const ocrRes = await OcrService.extractTextFromImage(req.file.buffer);
