@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Degree Certificate</title>
+  <style>
+    body { font-family: "Times New Roman", serif; margin: 40px; text-align: center; }
+    .logo img { width: 100px; margin-bottom: 10px; }
+    .university { font-size: 26px; font-weight: bold; color: #002147; }
+    .faculty { font-size: 18px; margin-bottom: 10px; color: #333; }
+    .title { font-size: 22px; margin: 15px 0; text-transform: uppercase; }
+    .content { font-size: 16px; margin: 30px auto; width: 80%; text-align: left; line-height: 1.6; }
+    .footer { margin-top: 80px; display: flex; justify-content: space-between; }
+    .signature { text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="university"><%= universityName %></div>
+  <div class="faculty"><%= faculty %></div>
+  <div class="title">DEGREE CERTIFICATE</div>
+
+  <div class="content">
+    This is to certify that <b><%= studentName %></b>, Register No: <b><%= registerNo %></b>, 
+    has successfully completed the <b><%= course %></b> program with <b><%= complementaryCourses %></b>.  
+
+    The candidate has fulfilled all requirements for the award of the <b><%= degree %></b> degree and 
+    has been declared to have passed with <b><%= className %></b> class, securing an overall grade of <b><%= grade %></b>.  
+
+    <br><br>
+    The program was completed on <b><%= programCompletionDate %></b> and this certificate 
+    (No: <b><%= certificateNo %></b>) is issued on <b><%= issueDate %></b>.
+  </div>
+
+  <div class="footer">
+    <div>Seal</div>
+    <div class="signature">
+      <b><%= viceChancellorName %></b><br>
+      Vice Chancellor
+    </div>
+  </div>
+</body>
+</html>

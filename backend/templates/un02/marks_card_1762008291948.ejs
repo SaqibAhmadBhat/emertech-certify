@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Marks Card</title>
+  <style>
+    body { font-family: "Times New Roman", serif; margin: 40px; text-align: center; }
+    .logo img { width: 100px; margin-bottom: 10px; }
+    .university { font-size: 24px; font-weight: bold; color: #002147; }
+    .title { font-size: 20px; margin: 10px 0; }
+    .student-details { font-size: 16px; margin: 20px 0; }
+    table { width: 90%; margin: 0 auto; border-collapse: collapse; font-size: 15px; }
+    table, th, td { border: 1px solid black; padding: 8px; }
+    th { background: #f2f2f2; }
+    .footer { margin-top: 40px; display: flex; justify-content: space-between; }
+    .signature { text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="university"><%= universityName %></div>
+  <div class="title">Semester Marks Card</div>
+
+  <div class="student-details">
+    Name: <%= studentName %><br>
+    Register No: <%= registerNo %><br>
+    Exam Date: <%= examDate %>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Subject</th>
+        <th>Maximum Marks</th>
+        <th>Marks Obtained</th>
+        <th>Grade</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% subjects.forEach(function(sub){ %>
+        <tr>
+          <td><%= sub.name %></td>
+          <td><%= sub.maxMarks %></td>
+          <td><%= sub.obtainedMarks %></td>
+          <td><%= sub.grade %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <div>Seal</div>
+    <div class="signature">Controller of Examinations</div>
+  </div>
+</body>
+</html>

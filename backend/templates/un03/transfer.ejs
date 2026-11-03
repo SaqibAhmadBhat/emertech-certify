@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Transfer Certificate</title>
+  <style>
+    body { font-family: "Times New Roman", serif; margin: 40px; text-align: center; }
+    .logo img { width: 100px; margin-bottom: 10px; }
+    .university { font-size: 24px; font-weight: bold; color: #002147; }
+    .title { font-size: 20px; margin: 10px 0; }
+    .content { font-size: 16px; margin: 30px auto; width: 80%; text-align: left; line-height: 1.6; }
+    .footer { margin-top: 60px; display: flex; justify-content: space-between; }
+    .signature { text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="university"><%= universityName %></div>
+  <div class="title">TRANSFER CERTIFICATE</div>
+
+  <div class="content">
+    This is to certify that <b><%= studentName %></b>, son/daughter of <b><%= parentName %></b>, 
+    was a bonafide student of <b><%= collegeName %></b>.  
+    He/She was admitted on <b><%= admissionDate %></b> and left the college on <b><%= leavingDate %></b>.  
+    During his/her study, he/she pursued the <b><%= course %></b> course.  
+
+    <br><br>
+    This certificate is issued on <b><%= issueDate %></b> with Register No: <b><%= registerNo %></b>  
+    and Transfer Certificate No: <b><%= tcNumber %></b>.
+  </div>
+
+  <div class="footer">
+    <div>Seal</div>
+    <div class="signature">Principal / Registrar</div>
+  </div>
+</body>
+</html>
