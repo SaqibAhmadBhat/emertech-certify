@@ -1,0 +1,42 @@
+MIT License
+
+Emertech Certify (v2.0 Clean-Room Architecture)
+Copyright (c) 2026 Saqib Ahmad Bhat
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+Third-Party Open-Source Runtime Dependency Acknowledgements
+================================================================================
+The Emertech Certify clean-room implementation imports standard open-source
+dependencies governed by their respective upstream licenses:
+
+1. React & React-DOM: MIT License, Copyright (c) Meta Platforms, Inc.
+2. React Router DOM: MIT License, Copyright (c) Remix Software Inc.
+3. Ethers.js: MIT License, Copyright (c) Richard Moore
+4. Hardhat: MIT License, Copyright (c) Nomic Foundation
+5. Express: MIT License, Copyright (c) StrongLoop, Inc.
+6. Mongoose: MIT License, Copyright (c) Automattic, Inc.
+7. pdf-lib: MIT License, Copyright (c) Andrew Dillon
+8. Tesseract.js: Apache License 2.0, Copyright (c) Naptha / Jerome Wu
+9. Lucide React: ISC License, Copyright (c) Lucide Contributors
+10. Bcryptjs: MIT License, Copyright (c) Daniel Wirtz
+11. JSONWebToken: MIT License, Copyright (c) Auth0
+12. QRCode: MIT License, Copyright (c) Ryan Day
+13. mongodb-memory-server: MIT License, Copyright (c) nodkz

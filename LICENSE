@@ -1,6 +1,15 @@
 MIT License
 
-Copyright (c) 2026 Alwin James
+The software in this repository contains two evolutionary tiers with distinct copyright scopes:
+
+================================================================================
+1. Upstream Foundation & Historical v1 Prototype (Directories: backend/, contracts/, frontend/)
+================================================================================
+Original Work:
+Copyright (c) 2024 Alwin James
+
+Modifications, Security Hardening & Enhancements:
+Copyright (c) 2026 Saqib Ahmad Bhat
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -12,6 +21,19 @@ furnished to do so, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
+================================================================================
+2. Clean-Room v2.0 Architecture (Directory: cleanroom/)
+================================================================================
+Independently Authored Clean-Room Implementation:
+Copyright (c) 2026 Saqib Ahmad Bhat
+
+The cleanroom/ directory contains an independently developed, clean-room software
+architecture authored from the ground up by Saqib Ahmad Bhat, governed by its
+own separately scoped license in cleanroom/LICENSE.
+
+================================================================================
+MIT Disclaimer (Applicable to the Entire Repository)
+================================================================================
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE

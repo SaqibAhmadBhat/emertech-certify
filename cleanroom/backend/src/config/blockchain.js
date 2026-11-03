@@ -7,6 +7,7 @@ let provider = null;
 let signer = null;
 let contractInstance = null;
 let contractABI = null;
+let currentContractAddress = config.contractAddress;
 
 function loadContractArtifact() {
   const artifactPath = path.resolve(
@@ -35,22 +36,68 @@ function getBlockchainContext() {
   if (!provider) {
     provider = new ethers.providers.JsonRpcProvider(config.rpcUrl);
   }
-  if (!signer && config.deployerPrivateKey) {
-    try {
-      signer = new ethers.Wallet(config.deployerPrivateKey, provider);
-    } catch (e) {
-      console.warn('[Blockchain] Signer wallet initialization skipped:', e.message);
+
+  // Obtain signer:
+  if (!signer) {
+    if (config.deployerPrivateKey) {
+      try {
+        signer = new ethers.Wallet(config.deployerPrivateKey, provider);
+      } catch (e) {
+        console.warn('[Blockchain] Signer wallet initialization from private key skipped:', e.message);
+      }
+    } else if (config.isLocalNetwork) {
+      // For local Hardhat node, use unlocked JSON-RPC account #0
+      try {
+        signer = provider.getSigner(0);
+      } catch (e) {
+        console.warn('[Blockchain] Unlocked local signer access skipped:', e.message);
+      }
     }
   }
-  if (!contractInstance && contractABI && config.contractAddress && signer) {
-    contractInstance = new ethers.Contract(config.contractAddress, contractABI, signer);
+
+  const targetAddress = currentContractAddress || config.contractAddress;
+  if (!contractInstance && contractABI && targetAddress && ethers.utils.isAddress(targetAddress)) {
+    // If signer is available, bind with signer (allows state mutations). Otherwise, bind with provider (read-only).
+    const executor = signer || provider;
+    contractInstance = new ethers.Contract(targetAddress, contractABI, executor);
   }
-  return { provider, signer, contract: contractInstance, abi: contractABI };
+
+  return {
+    provider,
+    signer,
+    contract: contractInstance,
+    abi: contractABI,
+    contractAddress: targetAddress
+  };
+}
+
+/**
+ * Reconfigures blockchain connection dynamically (used during automated integration tests).
+ */
+function reconfigureBlockchain({ rpcUrl, contractAddress, deployerPrivateKey }) {
+  if (rpcUrl) {
+    provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+  }
+  if (deployerPrivateKey) {
+    signer = new ethers.Wallet(deployerPrivateKey, provider);
+  } else if (rpcUrl && (rpcUrl.includes('127.0.0.1') || rpcUrl.includes('localhost'))) {
+    signer = provider.getSigner(0);
+  }
+  if (contractAddress) {
+    currentContractAddress = contractAddress;
+  }
+  loadContractArtifact();
+  const executor = signer || provider;
+  if (currentContractAddress && ethers.utils.isAddress(currentContractAddress) && contractABI) {
+    contractInstance = new ethers.Contract(currentContractAddress, contractABI, executor);
+  }
+  return getBlockchainContext();
 }
 
 loadContractArtifact();
 
 module.exports = {
   getBlockchainContext,
-  loadContractArtifact
+  loadContractArtifact,
+  reconfigureBlockchain
 };

@@ -39,3 +39,8 @@ npm-debug.log*
 yarn-debug.log*
 *.log
 *.traineddata
+
+# Python cache artifacts
+__pycache__/
+*.py[cod]
+*$py.class
