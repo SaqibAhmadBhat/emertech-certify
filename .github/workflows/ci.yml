@@ -1,4 +1,4 @@
-name: Emertech Certify CI
+name: Emertech Certify Clean-Room v2.0 CI
 
 on:
   push:
@@ -8,10 +8,10 @@ on:
 
 jobs:
   # =========================================================================
-  # PRIMARY JOBS: Clean-Room v2.0 Architecture
+  # PRIMARY JOB 1: Clean-Room Smart Contracts (Solidity ^0.8.20)
   # =========================================================================
-  cleanroom-contracts:
-    name: Clean-Room Smart Contracts (Solidity ^0.8.20)
+  contracts:
+    name: Clean-Room Smart Contracts Unit Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -34,13 +34,16 @@ jobs:
           cd cleanroom/contracts
           npx hardhat compile
 
-      - name: Run Clean-Room Hardhat Tests (14/14 Tests)
+      - name: Run Hardhat Unit Tests (14/14 Passing)
         run: |
           cd cleanroom/contracts
           npx hardhat test
 
-  cleanroom-backend:
-    name: Clean-Room Backend Integration Tests (Node.js & Express)
+  # =========================================================================
+  # PRIMARY JOB 2: Backend Integration Tests with Real Local Blockchain
+  # =========================================================================
+  backend:
+    name: Backend API Integration Tests (Real EVM Consensus)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -53,18 +56,47 @@ jobs:
           cache: 'npm'
           cache-dependency-path: cleanroom/backend/package-lock.json
 
+      - name: Install Contracts Dependencies for Local EVM Node
+        run: |
+          cd cleanroom/contracts
+          npm ci
+          npx hardhat compile
+
+      - name: Start Local Hardhat Blockchain Node
+        run: |
+          cd cleanroom/contracts
+          npx hardhat node &
+          sleep 4
+
+      - name: Deploy EmertechCertificateRegistry to Local Node
+        id: deploy
+        run: |
+          cd cleanroom/contracts
+          DEPLOY_OUTPUT=$(npx hardhat run scripts/deploy.js --network localhost)
+          echo "$DEPLOY_OUTPUT"
+          CONTRACT_ADDR=$(echo "$DEPLOY_OUTPUT" | grep -oE '0x[a-fA-F0-9]{40}' | head -n 1)
+          echo "Deployed contract address: $CONTRACT_ADDR"
+          echo "CONTRACT_ADDRESS=$CONTRACT_ADDR" >> $GITHUB_ENV
+
       - name: Install Backend Dependencies
         run: |
           cd cleanroom/backend
           npm ci
 
-      - name: Run Clean-Room Integration Suite (18/18 Tests)
+      - name: Run Backend Integration Suite on Live EVM (19/19 Tests)
+        env:
+          NODE_ENV: test
+          BLOCKCHAIN_RPC_URL: http://127.0.0.1:8545
+          CONTRACT_ADDRESS: ${{ env.CONTRACT_ADDRESS }}
         run: |
           cd cleanroom/backend
-          node test/cleanroom.api.test.js
+          npm test
 
-  cleanroom-frontend:
-    name: Clean-Room Frontend Production Build (React 19)
+  # =========================================================================
+  # PRIMARY JOB 3: Frontend Production Build (React 19)
+  # =========================================================================
+  frontend:
+    name: Frontend Production Build Verification
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -82,97 +114,9 @@ jobs:
           cd cleanroom/frontend
           npm ci --legacy-peer-deps
 
-      - name: Build Clean-Room React Application
+      - name: Build React 19 Production Bundle
         env:
           CI: true
         run: |
           cd cleanroom/frontend
-          npm run build
-
-  # =========================================================================
-  # HISTORICAL PROTOTYPE JOBS: v1.0 Audited & Remediated
-  # =========================================================================
-  legacy-contracts:
-    name: Historical v1 Contracts Tests (Solidity ^0.8.19)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 20.x
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: contracts/package-lock.json
-
-      - name: Install Contracts Dependencies
-        run: |
-          cd contracts
-          npm ci
-
-      - name: Compile Smart Contracts
-        run: |
-          cd contracts
-          npx hardhat compile
-
-      - name: Run Hardhat Test Suite (9/9 Tests)
-        run: |
-          cd contracts
-          npm test
-
-  legacy-backend:
-    name: Historical v1 Backend API Tests (Node.js & Express)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 20.x
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Install Backend Dependencies
-        run: |
-          cd backend
-          npm ci
-
-      - name: Setup Test Environment Variables
-        run: |
-          cd backend
-          cp .env.example .env
-          sed -i 's/PORT=5000/PORT=5001/' .env
-
-      - name: Run Backend Integration Suite (13/13 Tests)
-        run: |
-          cd backend
-          npm test
-
-  legacy-frontend:
-    name: Historical v1 Frontend Build (React 18)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 20.x
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: frontend/certiport-frontend/package-lock.json
-
-      - name: Install Frontend Dependencies
-        run: |
-          cd frontend/certiport-frontend
-          npm ci --legacy-peer-deps
-
-      - name: Build React Application
-        env:
-          CI: true
-        run: |
-          cd frontend/certiport-frontend
           npm run build

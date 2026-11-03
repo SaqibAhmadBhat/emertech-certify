@@ -1,14 +1,12 @@
 # EMERTECH CERTIFY (v2.0 Clean-Room Architecture)
 ### AI-Assisted Blockchain-Based Academic Certificate Verification System
 
+[![Emertech Certify Clean-Room CI](https://github.com/SaqibAhmadBhat/emertech-certify/actions/workflows/ci.yml/badge.svg)](https://github.com/SaqibAhmadBhat/emertech-certify/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Solidity](https://img.shields.io/badge/Solidity-^0.8.20-363636?logo=solidity)](contracts/contracts/EmertechCertificateRegistry.sol)
 [![Hardhat](https://img.shields.io/badge/Hardhat-2.19.4-FFF100?logo=ethereum)](contracts/hardhat.config.js)
 [![React](https://img.shields.io/badge/React-19.1.1-61DAFB?logo=react)](frontend/package.json)
 [![Node](https://img.shields.io/badge/Node->=18.0.0-339933?logo=node.js)](package.json)
-[![Contract Tests](https://img.shields.io/badge/Contract_Tests-14%2F14_Passing-10B981)](contracts/test/)
-[![Backend Tests](https://img.shields.io/badge/Backend_Tests-18%2F18_Passing-10B981)](backend/test/)
-[![Frontend Build](https://img.shields.io/badge/Frontend_Build-Passing-10B981)](frontend/)
 
 An independent, clean-room decentralized credential verification architecture engineered from the ground up by **Saqib Ahmad Bhat** (Department of Computer Science and Engineering, **Government College of Engineering, Tirunelveli**).
 
@@ -16,11 +14,11 @@ An independent, clean-room decentralized credential verification architecture en
 
 ## 1. Executive Summary
 
-**Emertech Certify v2.0** is an independent, ground-up software implementation engineered to eliminate academic credential fraud and provide instantaneous, tamper-evident degree verification. Developed under a strict clean-room software engineering protocol, every module, smart contract, API endpoint, vector PDF generator, OCR service, and React component was authored independently without copying code from upstream repositories.
+**Emertech Certify v2.0** is an independent academic software demonstration and research prototype engineered to eliminate academic credential fraud and provide tamper-evident degree verification. Developed under a strict clean-room software engineering protocol, every module, smart contract, API endpoint, vector PDF generator, OCR service, and React component was authored independently without copying code from upstream repositories.
 
 ### Dual-Layer Verification Paradigm
-1. **Off-Chain Privacy Layer**: Student Personally Identifiable Information (PII) is structured into a canonical record, hashed deterministically via SHA-256 (NIST FIPS 180-4), compiled into a high-resolution vector PDF using `pdf-lib` with an embedded cryptographic QR code, and archived in content-addressed storage. Zero sensitive personal data (names, marks, GPAs, birthdates) is stored on-chain, minimizing PII exposure and facilitating alignment with GDPR Article 5(1)(c) and India DPDP Act data minimization principles.
-2. **On-Chain Consensus Layer**: The 256-bit cryptographic digest (`bytes32 certHash`), issuer address, timestamp, revocation flag, and pseudonymized student hash are anchored immutably to an Ethereum smart contract (`EmertechCertificateRegistry.sol`). Any verifier can authenticate credentials, detect bit-level document alterations, or inspect on-chain revocation states (observed local benchmark: < 500ms; public blockchain verification latency depends on RPC provider response times and network congestion).
+1. **Off-Chain Privacy Layer**: Student Personally Identifiable Information (PII) is structured into a canonical record, hashed deterministically via SHA-256 (NIST FIPS 180-4), compiled into a vector PDF using `pdf-lib` with an embedded cryptographic QR code, and archived in content-addressed storage. Zero sensitive personal data (names, marks, GPAs, birthdates) is stored on-chain, minimizing PII exposure and facilitating alignment with data minimization principles.
+2. **On-Chain Consensus Layer**: The 256-bit cryptographic digest (`bytes32 certHash`), issuer address, timestamp, revocation flag, and pseudonymized salted student hash are anchored immutably to an Ethereum smart contract (`EmertechCertificateRegistry.sol`). Any verifier can authenticate credentials, detect bit-level document alterations, or inspect on-chain revocation states (public blockchain verification latency depends on node RPC round-trip times and network congestion).
 
 ---
 
@@ -43,7 +41,7 @@ The Ethereum smart contract stores strictly minimal verification metadata:
 - `uint64 issuedAt`: Block timestamp of credential issuance.
 - `uint64 revokedAt`: Block timestamp of revocation (0 if currently active).
 - `bool isRevoked`: Boolean flag reflecting revocation status.
-- `string recipientIdHash`: Pseudonymized SHA-256 hash of the student registration number.
+- `string recipientIdHash`: Pseudonymized, high-entropy salted SHA-256 hash (`SHA-256(studentId + ":" + salt)`).
 - `string metadataURI`: Content-addressed IPFS URI (`ipfs://...`) or local content reference.
 
 > **Zero PII Confirmation**: Student legal names, letter grades, GPAs, and demographic records are strictly excluded from the blockchain ledger.
@@ -62,17 +60,17 @@ To enable seamless evaluation in offline or air-gapped environments:
 
 ---
 
-## 3. Quickstart & Verification in 30 Seconds
+## 3. Quickstart & Verification
 
 ```bash
 # 1. Enter cleanroom directory
 cd cleanroom
 
-# 2. Run the complete test suite (14 contract tests + 18 backend tests)
+# 2. Run the complete test suite (14 contract tests + 19 backend tests on live EVM ledger)
 npm run test:all
 ```
 
-### Verified Terminal Output:
+### Verified Terminal Evidence (Live Local EVM Consensus):
 ```
   EmertechCertificateRegistry (Clean-Room Architecture)
     1. Deployment & Administrative Authority
@@ -94,31 +92,40 @@ npm run test:all
       ✔ Should prevent unauthorized third parties from revoking certificates
       ✔ Should reject revoking an already revoked certificate
 
-  14 passing (728ms)
+  14 passing (819ms)
 
 ================================================================
-🧪 RUNNING EMERTECH CERTIFY CLEAN-ROOM TEST SUITE (v2.0)
+🧪 EMERTECH CERTIFY CLEAN-ROOM v2.0 INTEGRATION TEST SUITE
+🏛️ Fictional Academic Fixture: Apex Institute of Technology (AIT)
+🔗 On-Chain Consensus: Real Local Hardhat EVM Execution
 ================================================================
-1. Testing System Health Check (/api/v2/health)...        ✅ Verified
-2. Testing Super Admin Registration & Login...           ✅ Verified
-3. Testing Academic Institution Application Queue...     ✅ Verified
-4. Testing Admin Approval & Status Update...             ✅ Verified
-5. Testing Authorized Institution Login...               ✅ Verified
-6. Testing Student Account Registration & Login...       ✅ Verified
-7. Testing Certificate Issuance & Vector PDF...          ✅ Verified
-8. Testing Vector PDF Download Endpoint...               ✅ Verified
-9. Testing Mode 1: Public Verification by Hash...        ✅ Verified
-10. Testing Mode 2: Verification by PDF Upload...        ✅ Verified
-11. Testing Tamper Detection on Altered PDF...           ✅ Verified
-12. Testing Mode 3: QR Code Payload Verification...      ✅ Verified
-13. Testing Student Credential Retrieval...              ✅ Verified
-14. Testing On-Chain Certificate Revocation...           ✅ Verified
-15. Testing Verification of Revoked Credential...        ✅ Verified
-16. Testing Mode 4: Tesseract.js Neural OCR Image...     ✅ Verified
-17. Testing Batch Certificate Issuance...                ✅ Verified
-18. Testing Super Admin Telemetry...                     ✅ Verified
+1. Testing System Health Check (/api/v2/health)...            ✅ Verified.
+2. Testing SHA-256 NIST Known-Answer Tests & Keccak...       ✅ Verified.
+3. Testing Super Administrator Registration & Login...       ✅ Verified.
+4. Testing Academic Institution Application Queue...         ✅ Verified.
+5. Testing Super Admin Approval & On-Chain Status...         ✅ Verified.
+6. Testing Authorized Institution Admin Login...             ✅ Verified.
+7. Testing Student Account Registration...                   ✅ Verified.
+8. Testing Certificate Issuance & Real EVM Anchoring...      ✅ Verified (TxHash mined).
+9. Testing Vector PDF Download Endpoint...                   ✅ Verified.
+10. Testing Mode 1: Public Verification by Hash...           ✅ Verified (onChain: true).
+11. Testing Mode 2: Verification by PDF Upload...            ✅ Verified (onChain: true).
+12. Testing Bitwise Tamper Detection on Altered PDF...       ✅ Verified (TAMPER_DETECTED).
+13. Testing Mode 3: QR Code Payload Verification...          ✅ Verified.
+14. Testing Student Credential Retrieval...                  ✅ Verified.
+15. Testing Real On-Chain Certificate Revocation...          ✅ Verified (TxHash mined).
+16. Testing Public Verification of Revoked Credential...     ✅ Verified.
+17. Testing Mode 4: Tesseract.js Neural OCR (Synthetic)...   ✅ Verified.
+18. Testing Batch Certificate Issuance (Real EVM)...         ✅ Verified.
+19. Testing Super Admin Telemetry & Governance...            ✅ Verified.
 
-🎉 ALL 18 CLEAN-ROOM TESTS PASSED WITH 100% SUCCESS!
+================================================================
+📊 CLEAN-ROOM v2.0 TEST EXECUTION SUMMARY:
+   Passed:  19
+   Failed:  0
+   Skipped: 0
+================================================================
+🎉 ALL CLEAN-ROOM TESTS PASSED WITH 100% SUCCESS ON REAL EVM LEDGER!
 ```
 
 ---

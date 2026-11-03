@@ -60,3 +60,15 @@ The following major enhancements and architectural changes were implemented by S
    - Complete visual redesign featuring a modern white/light layout with navy blue and purple academic accents, responsive data tables, live status badges, and Lucide icons.
    - Added user feedback modals, system settings, and clear academic disclaimer footers.
 
+---
+
+## Clean-Room v2.0 Architecture Scope
+
+The `cleanroom/` directory contains an independently engineered, clean-room reimplementation (`Emertech Certify v2.0`). It was developed using specification-driven clean-room methodology:
+- Authored independently by Saqib Ahmad Bhat.
+- Fully decoupled from upstream legacy files.
+- Governed by its own separately scoped license (`cleanroom/LICENSE`).
+- Verified via reproducible provenance scanning (`cleanroom/tools/provenance_scan.py`).
+- All tests execute against real EVM consensus without simulated transaction fallbacks.
+
+

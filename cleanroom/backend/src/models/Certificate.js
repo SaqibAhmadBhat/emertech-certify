@@ -33,6 +33,16 @@ const certificateSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  recipientSalt: {
+    type: String,
+    default: ''
+  },
+  recipientIdHash: {
+    type: String,
+    lowercase: true,
+    trim: true,
+    default: ''
+  },
   degreeTitle: {
     type: String,
     required: true,
@@ -74,7 +84,11 @@ const certificateSchema = new mongoose.Schema({
   },
   blockchainTxHash: {
     type: String,
-    default: ''
+    default: null
+  },
+  onChainAnchored: {
+    type: Boolean,
+    default: false
   },
   isRevoked: {
     type: Boolean,
@@ -83,6 +97,10 @@ const certificateSchema = new mongoose.Schema({
   revocationReason: {
     type: String,
     default: ''
+  },
+  revocationTxHash: {
+    type: String,
+    default: null
   },
   revokedAt: {
     type: Date

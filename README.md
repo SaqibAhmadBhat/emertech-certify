@@ -3,12 +3,12 @@
 # EMERTECH CERTIFY
 ### AI-Assisted Blockchain-Based Academic Certificate Verification System
 
+[![Emertech Certify Clean-Room CI](https://github.com/SaqibAhmadBhat/emertech-certify/actions/workflows/ci.yml/badge.svg)](https://github.com/SaqibAhmadBhat/emertech-certify/actions/workflows/ci.yml)
 [![Architecture: Clean-Room v2.0](https://img.shields.io/badge/Architecture-Clean--Room_v2.0-8B5CF6?style=for-the-badge&logo=codeforces)](cleanroom/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
-[![Cleanroom Contracts](https://img.shields.io/badge/Cleanroom_Contracts-14%2F14_Passing-10B981?style=for-the-badge&logo=solidity)](cleanroom/contracts/test/)
-[![Cleanroom Backend](https://img.shields.io/badge/Cleanroom_Backend-18%2F18_Passing-10B981?style=for-the-badge&logo=node.js)](cleanroom/backend/test/)
-[![Cleanroom Frontend](https://img.shields.io/badge/Cleanroom_Frontend-React_19_Passing-10B981?style=for-the-badge&logo=react)](cleanroom/frontend/)
-[![Historical v1 Prototype](https://img.shields.io/badge/Historical_v1-Audited_%26_Remediated-38BDF8?style=for-the-badge)](NOTICE.md)
+[![Solidity: ^0.8.20](https://img.shields.io/badge/Solidity-^0.8.20-363636?style=for-the-badge&logo=solidity)](cleanroom/contracts/contracts/EmertechCertificateRegistry.sol)
+[![React: 19](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react)](cleanroom/frontend/)
+[![Node: >=18](https://img.shields.io/badge/Node->=18-339933?style=for-the-badge&logo=node.js)](package.json)
 
 <br />
 
@@ -35,10 +35,9 @@
 
 ## 🌟 Executive Summary: Clean-Room v2.0 Primary Architecture
 
-**Emertech Certify** is an academic software project engineered by **Saqib Ahmad Bhat** (Department of Computer Science and Engineering, **Government College of Engineering, Tirunelveli**) to eliminate academic credential fraud, fraudulent diploma mills, and manual registrar verification bottlenecks.
+**Emertech Certify** is an academic software demonstration and research project engineered by **Saqib Ahmad Bhat** (Department of Computer Science and Engineering, **Government College of Engineering, Tirunelveli**) designed to evaluate decentralized credential verification, tamper detection, and privacy preservation.
 
-### Architectural Milestone: Clean-Room v2.0 Reengineering
-The project contains two distinct evolutionary tiers:
+### Evolutionary Repository Structure
 1. **Primary Production Implementation (v2.0 Clean-Room)** in [`cleanroom/`](cleanroom/): An **independently developed**, ground-up clean-room software architecture. Every Solidity smart contract, Express backend controller, Mongoose schema, pure vector PDF generator, neural OCR pipeline, and React 19 component was authored from scratch by Saqib Ahmad Bhat using open standards (NIST FIPS 180-4, W3C Verifiable Credentials, RFC 7519, and EVM Solidity ^0.8.20).
 2. **Historical Prototype (v1.0 Security-Hardened)** in root directories (`/backend`, `/contracts`, `/frontend`): The original pedagogical prototype adapted from the open-source **Certiport** repository by Alwin James (MIT License). It has been comprehensively audited to remediate critical upstream vulnerabilities (such as eliminating hardcoded Ethereum private keys and plaintext credential logging) and is retained solely for historical provenance and academic audit comparison.
 
@@ -52,8 +51,8 @@ The project contains two distinct evolutionary tiers:
 | **Authorship & Provenance** | **100% Independently Authored** by Saqib Ahmad Bhat | Upstream Certiport baseline by Alwin James (Remediated) |
 | **Smart Contract** | `EmertechCertificateRegistry.sol` (Solidity ^0.8.20, gas-packed structs, custom errors, $O(1)$ mapping) | `CertificateRegistry.sol` (Solidity ^0.8.19, string lookup with SHA-256 hash patch) |
 | **Contract Unit Tests** | **14 / 14 Passing** (Deployment, Auth, Duplicate, Revocation) | 9 / 9 Passing |
-| **Backend Integration Tests** | **18 / 18 Passing** (Full auth, vector PDF, 4 verification modes, OCR, batch) | 18 / 18 Passing (Legacy routes & templates) |
-| **PDF Generation Engine** | **Pure Vector Memory Compilation** via `pdf-lib` (<50ms, zero Chromium) | Headless Chromium via Puppeteer (High RAM overhead) |
+| **Backend Integration Tests** | **19 / 19 Passing on Live EVM Node** (NIST KAT, real on-chain transactions, 4 verification modes, OCR fixture) | 18 / 18 Passing (Legacy routes & templates) |
+| **PDF Generation Engine** | **Pure Vector Memory Compilation** via `pdf-lib` (Zero Chromium overhead) | Headless Chromium via Puppeteer (High RAM overhead) |
 | **Frontend Framework** | **React 19** with custom glassmorphism & original SVG branding | React 18 with legacy dashboard layouts |
 | **Storage & Persistence** | Dual-mode: Content-Addressed Local FS + IPFS Pinata adapter | Local uploads directory + Pinata API |
 | **Automated Fallbacks** | Auto in-memory MongoDB (`mongodb-memory-server`) + local fallback provider | Requires live external MongoDB & local Hardhat node |
@@ -64,8 +63,8 @@ The project contains two distinct evolutionary tiers:
 
 The clean-room v2.0 implementation is completely self-contained within the `cleanroom/` directory.
 
-### 1. Execute All Automated Tests in 30 Seconds
-Run the entire clean-room test suite (14 smart contract tests + 18 backend integration tests) with zero external setup:
+### 1. Execute All Automated Tests
+Run the clean-room test suite (14 smart contract tests + 19 backend integration tests executed on a live local EVM node):
 
 ```bash
 # Clone the repository
@@ -101,37 +100,48 @@ npm run test:all
   14 passing (819ms)
 ```
 
-#### Terminal Evidence: Clean-Room Backend Integration Tests (18/18 Passing)
+#### Terminal Evidence: Backend Integration Tests with Real EVM Consensus (19/19 Passing)
 ```
 ================================================================
-🧪 RUNNING EMERTECH CERTIFY CLEAN-ROOM TEST SUITE (v2.0)
-👨‍💻 Architect: Saqib Ahmad Bhat
-🏛️ Institution: Government College of Engineering, Tirunelveli
+🧪 EMERTECH CERTIFY CLEAN-ROOM v2.0 INTEGRATION TEST SUITE
+🏛️ Fictional Academic Fixture: Apex Institute of Technology (AIT)
+🔗 On-Chain Consensus: Real Local Hardhat EVM Execution
 ================================================================
-[Database] External MongoDB connection unavailable. Initializing embedded in-memory MongoDB...
-[Database] Embedded in-memory MongoDB started at mongodb://127.0.0.1:16421/
-[Test Server] Live on ephemeral port 53850
+[Database] Embedded in-memory MongoDB started at mongodb://127.0.0.1:51478/
+[Blockchain Setup] Local Hardhat node started successfully.
+[Blockchain Setup] EmertechCertificateRegistry deployed to: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+[Test Server] Live on ephemeral port 54244
 
 1. Testing System Health Check (/api/v2/health)...            ✅ Health check verified.
-2. Testing Super Administrator Registration & Login...       ✅ Super Admin authenticated.
-3. Testing Academic Institution Application Queue...         ✅ Institution application queued.
-4. Testing Super Admin Approval & On-Chain Status...         ✅ Institution authorized.
-5. Testing Authorized Institution Login...                   ✅ Institution admin authorized.
-6. Testing Student Account Registration & Login...           ✅ Student registered.
-7. Testing Certificate Issuance & Vector PDF...              ✅ Certificate compiled & anchored!
-8. Testing Vector PDF Download Endpoint...                   ✅ Vector PDF downloaded (5250 bytes).
-9. Testing Mode 1: Public Verification by Hash...            ✅ Mode 1 Verified: AUTHENTIC.
-10. Testing Mode 2: Verification by PDF Binary Upload...     ✅ Mode 2 Verified: Bitwise digest match.
-11. Testing Tamper Detection on Altered PDF Document...      ✅ Tamper Detection Verified: Mismatch caught.
-12. Testing Mode 3: QR Code Payload Verification...          ✅ Mode 3 Verified: QR resolved.
-13. Testing Student Credential Retrieval...                  ✅ Transcripts retrieved.
-14. Testing On-Chain Certificate Revocation Pipeline...      ✅ Certificate revoked.
-15. Testing Public Verification of Revoked Credential...     ✅ Revocation confirmed: REVOKED.
-16. Testing Mode 4: Tesseract.js Neural OCR Image...         ✅ Mode 4 Verified: OCR extracted text.
-17. Testing Batch Certificate Issuance (CSV / Array)...      ✅ Batch issuance processed 2 certs.
-18. Testing Super Admin Telemetry...                         ✅ Telemetry verified.
+2. Testing SHA-256 NIST Known-Answer Tests & Keccak...       ✅ NIST vectors passed; distinct from Keccak.
+3. Testing Super Administrator Registration & Login...       ✅ Super Admin registered and authenticated.
+4. Testing Academic Institution Application Queue...         ✅ Institution application queued.
+5. Testing Super Admin Approval & On-Chain Status...         ✅ Institution accredited on-chain.
+6. Testing Authorized Institution Admin Login...             ✅ Institution admin authorized.
+7. Testing Student Account Registration...                   ✅ Student registered and linked to AIT.
+8. Testing Certificate Issuance & Real EVM Anchoring...      ✅ Certificate anchored on-chain with mined tx!
+   ID:     AIT-MW10CRJQ-0042
+   Hash:   0xe5682979ea2cb463ed60cc5321cbaeb4dc9e4ce4419745dbddf733ad2afb6e77
+   TxHash: 0x1593c49d31bda4041d4e5ae7cef5c35a61c4bac612956829a316038425beecd4
+9. Testing Vector PDF Download Endpoint...                   ✅ Vector PDF downloaded (5271 bytes).
+10. Testing Mode 1: Public Verification by Hash...           ✅ Mode 1 Verified: AUTHENTIC (onChain: true).
+11. Testing Mode 2: Verification by PDF Upload...            ✅ Mode 2 Verified: Digest matches (onChain: true).
+12. Testing Bitwise Tamper Detection on Altered PDF...       ✅ Tamper Detection Verified: TAMPER_DETECTED flagged.
+13. Testing Mode 3: QR Code Payload Verification...          ✅ Mode 3 Verified: QR resolved on-chain.
+14. Testing Student Credential Retrieval...                  ✅ Transcripts retrieved.
+15. Testing Real On-Chain Certificate Revocation...          ✅ Revocation mined: 0x191910812551d8e80d...
+16. Testing Public Verification of Revoked Credential...     ✅ Revocation confirmed: REVOKED.
+17. Testing Mode 4: Tesseract.js Neural OCR (Synthetic)...   ✅ Mode 4 Verified: Entities extracted from fixture.
+18. Testing Batch Certificate Issuance (Real EVM)...         ✅ Batch issuance processed 2 certs on-chain.
+19. Testing Super Admin Telemetry & Governance...            ✅ Telemetry verified.
 
-🎉 ALL 18 CLEAN-ROOM TESTS PASSED WITH 100% SUCCESS!
+================================================================
+📊 CLEAN-ROOM v2.0 TEST EXECUTION SUMMARY:
+   Passed:  19
+   Failed:  0
+   Skipped: 0
+================================================================
+🎉 ALL CLEAN-ROOM TESTS PASSED WITH 100% SUCCESS ON REAL EVM LEDGER!
 ```
 
 ### 2. Start the Clean-Room Full Stack Locally
@@ -185,7 +195,7 @@ Emertech Certify enforces a strict **dual-layer verification paradigm** balancin
 ```
 
 ### 1. Privacy by Design: Exact On-Chain Data Model
-To minimize personal data exposure and facilitate alignment with international privacy principles (including GDPR Article 5(1)(c) data minimization and the India DPDP Act), **zero Personally Identifiable Information (PII)** is ever committed to the blockchain.
+To minimize personal data exposure in accordance with data minimization principles, **zero Personally Identifiable Information (PII)** is ever committed to the blockchain.
 
 The on-chain struct `CertificateRecord` stores strictly:
 - `bytes32 certHash`: 32-byte cryptographic SHA-256 digest of the canonical document payload.
@@ -193,12 +203,15 @@ The on-chain struct `CertificateRecord` stores strictly:
 - `uint64 issuedAt`: Block timestamp of credential issuance.
 - `uint64 revokedAt`: Block timestamp of revocation (0 if currently active).
 - `bool isRevoked`: Boolean flag reflecting revocation status.
-- `string recipientIdHash`: Pseudonymized SHA-256 hash of the student registration number.
+- `string recipientIdHash`: Pseudonymized, high-entropy salted SHA-256 hash (`SHA-256(studentId + ":" + salt)`).
 - `string metadataURI`: Content-addressed IPFS URI (`ipfs://...`) or local content reference.
 
 > **Zero PII Confirmation**: Student legal names, letter grades, GPAs, and demographic records are strictly excluded from the blockchain ledger.
 
-### 2. Deterministic Canonicalization (NIST FIPS 180-4)
+### 2. High-Entropy Salting for Pseudonymity
+Because student registration identifiers frequently follow predictable sequential patterns, storing unsalted hashes would allow offline enumeration attacks. Emertech Certify generates a 128-bit cryptographically secure random salt for each certificate (`recipientSalt`), storing the salt off-chain and anchoring only the salted digest on-chain. This provides robust pseudonymization, though not total anonymity.
+
+### 3. Deterministic Canonicalization (NIST FIPS 180-4)
 To ensure identical cryptographic digests across heterogeneous environments, academic records are serialized using an unambiguous, pipe-delimited canonical standard before hashing:
 
 $$\text{CanonicalString} = \text{"EMERTECHv2"} \mathbin{\Vert} \text{INSTITUTION\_CODE} \mathbin{\Vert} \text{STUDENT\_ID} \mathbin{\Vert} \text{NAME} \mathbin{\Vert} \text{DEGREE} \mathbin{\Vert} \text{MAJOR} \mathbin{\Vert} \text{DATE} \mathbin{\Vert} \text{TIMESTAMP}$$
@@ -207,22 +220,20 @@ $$\text{certHash} = \text{"0x"} \mathbin{\Vert} \text{SHA256}(\text{CanonicalStr
 
 Any modification to a single character, date, or grade alters the digest completely (avalanche effect), triggering an immediate verification failure.
 
-### 3. Cryptographic Tamper-Evidence vs. Real-World Authenticity
+### 4. Cryptographic Tamper-Evidence vs. Real-World Authenticity
 - **Mathematical Tamper-Evidence**: Verification proves that the presented certificate PDF exactly matches the SHA-256 digest anchored by the university's registered Ethereum address at the recorded block timestamp.
-- **Operational Boundary**: Cryptographic verification proves that an authorized institution's key signed the certificate hash; it cannot independently certify the physical or real-world truthfulness of claims made by an institution if an authorized private key is misused or compromised. Institutional key custody remains a critical operational prerequisite.
+- **Operational Boundary**: Cryptographic verification proves that an authorized institution's private key signed the certificate hash; it cannot independently certify the physical or real-world truthfulness of claims made by an institution if an authorized private key is misused or compromised. Institutional key custody remains a critical operational prerequisite.
 
 ---
 
-## 🔍 Multi-Modal Verification Matrix & Latency Characteristics
+## 🔍 Multi-Modal Verification Matrix & Performance Profiles
 
-| Verification Mode | Input Mechanism | Processing Pipeline | Target Environment | Latency Profile |
+| Verification Mode | Input Mechanism | Processing Pipeline | Target Environment | Performance Characteristics |
 |---|---|---|---|---|
-| **Mode 1: Direct Hash** | 64-char Hex Hash | Direct constant-time EVM mapping lookup `certificates[certHash]` | Web portal, API clients | **Local Test Benchmark**: < 50ms<br>**Public RPC**: 200ms–1.5s (depends on network RTT) |
-| **Mode 2: PDF Binary** | Uploaded `.pdf` File | Binary SHA-256 buffer hash computed and matched against on-chain state | Employers, HR portals | **Local Test Benchmark**: < 80ms<br>**Public RPC**: 300ms–2.0s |
-| **Mode 3: QR Payload** | Scanned 2D QR Code | Decodes embedded URL parameter, queries smart contract status | Smartphone camera | **Local Test Benchmark**: < 60ms<br>**Public RPC**: 250ms–1.8s |
-| **Mode 4: Neural OCR** | Scanned Image / Photo | Tesseract.js WebAssembly worker parses text, extracts ID, resolves hash | Physical paper verification | **Local Client Benchmark**: 1.2s–3.5s (depends on CPU WASM threads) |
-
-> **Latency Disclosure**: Sub-500ms verification is an observed benchmark in local and low-latency testing environments. On public networks (e.g. Ethereum Sepolia, Polygon), verification latency is governed by JSON-RPC node round-trip times and network congestion.
+| **Mode 1: Direct Hash** | 64-char Hex Hash | Direct constant-time EVM mapping lookup `certificates[certHash]` | Web portal, API clients | Constant-time $O(1)$ EVM query. Public RPC latency governed by network round-trip time. |
+| **Mode 2: PDF Binary** | Uploaded `.pdf` File | Binary SHA-256 buffer hash computed and matched against on-chain state | Employers, HR portals | Streaming binary digest computation + on-chain lookup. |
+| **Mode 3: QR Payload** | Scanned 2D QR Code | Decodes embedded URL parameter, queries smart contract status | Smartphone camera | URL parameter resolution + smart contract query. |
+| **Mode 4: Neural OCR** | Scanned Image / Photo | Tesseract.js WebAssembly worker parses text, extracts ID, resolves hash | Physical paper verification | Client-side WASM neural network execution; speed depends on client CPU cores. |
 
 ---
 
@@ -234,7 +245,7 @@ To ensure continuous operation during academic demonstrations, local evaluations
 |---|---|---|---|
 | **Relational Database** | MongoDB Atlas Cluster | In-Memory MongoDB (`mongodb-memory-server`) | External `MONGO_URI` unreachable or unconfigured |
 | **Document Storage** | IPFS Gateway (Pinata API) | Local Filesystem Storage (`cleanroom/backend/storage/certificates/`) | Missing Pinata API credentials |
-| **Consensus RPC** | Ethereum Node / Infura / Alchemy | Local In-Memory Fallback Ledger | Ethereum JSON-RPC endpoint offline or unreachable |
+| **Consensus RPC** | Ethereum Node / Infura / Alchemy | Local JSON-RPC Node / Unlocked Signers | Ethereum JSON-RPC endpoint offline or unreachable |
 
 > **Operational Boundary**: These fallback mechanisms are engineered for zero-dependency local evaluation and academic testing; production deployments require dedicated MongoDB clusters, pinned IPFS storage nodes, and reliable Ethereum RPC gateways.
 
@@ -245,20 +256,26 @@ To ensure continuous operation during academic demonstrations, local evaluations
 ```
 emertech-certify/
 ├── cleanroom/                       # ★ PRIMARY INDEPENDENT v2.0 IMPLEMENTATION
+│   ├── LICENSE                      # Scoped MIT License for Clean-Room Implementation
 │   ├── contracts/                   # Solidity ^0.8.20 Smart Contracts (Hardhat, 14 Tests)
 │   │   ├── contracts/EmertechCertificateRegistry.sol
 │   │   └── test/EmertechCertificateRegistry.test.js
-│   ├── backend/                     # Decoupled Node.js/Express REST API (18 Integration Tests)
+│   ├── backend/                     # Decoupled Node.js/Express REST API (19 Integration Tests)
 │   │   ├── src/services/            # Crypto, Blockchain, PdfVector, OCR, Storage
-│   │   └── test/cleanroom.api.test.js
+│   │   └── test/                    # Live EVM Integration Suite & Synthetic OCR Fixture
 │   ├── frontend/                    # React 19 SPA (Glassmorphic Design, SVG Branding)
 │   ├── docs/                        # Complete Technical Documentation Suite
 │   │   ├── ARCHITECTURE.md          # Four-tier system architecture
 │   │   ├── PROVENANCE_AUDIT.md      # Empirical source code overlap analysis
+│   │   ├── PROVENANCE_OUTPUT.txt    # Reproducible scan output
+│   │   ├── file_hashes.json         # Cryptographic hashes of all cleanroom source files
 │   │   ├── SECURITY.md              # Threat modeling and privacy policy
 │   │   ├── SMART_CONTRACTS.md       # EVM specifications and gas optimization
 │   │   ├── API_DOCUMENTATION.md     # RESTful v2 API specifications
-│   │   └── TESTING.md               # Automated testing guide
+│   │   ├── TESTING.md               # Automated testing guide
+│   │   └── EXPORT_STRATEGY.md       # Clean separation & standalone repository plan
+│   ├── tools/                       # Reproducible audit and scanning scripts
+│   │   └── provenance_scan.py       # Empirical block-level comparison tool
 │   ├── CLEANROOM_AUDIT.md           # 5-checkpoint formal audit with test evidence
 │   └── CLEANROOM_SPECIFICATIONS.md  # Standards-based requirements specifications
 │
@@ -267,21 +284,22 @@ emertech-certify/
 ├── frontend/certiport-frontend/     # Historical v1 React Frontend
 ├── assets/                          # Architectural diagrams, animations, and screenshots
 ├── presentation/                    # Standalone HTML5/CSS3 presentation slide deck
-├── .github/workflows/ci.yml         # GitHub Actions CI matrix testing cleanroom subprojects
+├── .github/workflows/ci.yml         # Primary GitHub Actions CI testing cleanroom subprojects
+├── .github/workflows/historical-v1.yml # Archival workflow for historical prototype
 ├── NOTICE.md                        # Historical attribution to upstream Certiport baseline
-└── LICENSE                          # MIT License
+└── LICENSE                          # Unified MIT License with dual copyright scopes
 ```
 
 ---
 
 ## 🔬 Provenance & Intellectual Property Audit
 
-A comprehensive AST token analysis was performed comparing all **48 clean-room source files** against the **73 legacy Certiport files**:
+A reproducible automated scan tool ([`cleanroom/tools/provenance_scan.py`](cleanroom/tools/provenance_scan.py)) was executed comparing all **66 clean-room source files** against the **79 legacy Certiport files**:
 
 | Component | Independent Clean-Room Code | Overlap with Legacy Certiport | Overlap Nature |
 |---|---|---|---|
 | **Smart Contracts** | **100% Independent** | 0 lines copied | Non-copyrightable Solidity idioms (`modifier onlyOwner()`) |
-| **Backend Services** | **100% Independent** | 0 lines copied | Standard Express/Mongoose keywords (`type: String`) |
+| **Backend Services** | **100% Independent** | 0 lines copied | Standard Express/Mongoose keywords (`type: String`, `express.Router()`) |
 | **Frontend UI** | **100% Independent** | 0 lines copied | Standard React conventions (`e.preventDefault()`, CSS resets) |
 | **Branding & Assets** | **100% Independent** | 0 lines copied | Original SVG vector logo, glassmorphic dark palette |
 
@@ -315,7 +333,7 @@ For the full line-by-line audit and empirical token analysis, refer to [`cleanro
 ## 📜 Citation & License
 
 ### Software License
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details. Upstream attribution is recorded in [NOTICE.md](NOTICE.md).
+This repository is licensed under the **MIT License** with clear delineation between upstream and clean-room scopes — see the [LICENSE](LICENSE) file for details. Upstream attribution is recorded in [NOTICE.md](NOTICE.md). The independent v2.0 cleanroom implementation is separately licensed in [`cleanroom/LICENSE`](cleanroom/LICENSE).
 
 ### Academic Citation (BibTeX)
 ```bibtex
