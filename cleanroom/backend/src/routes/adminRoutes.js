@@ -9,6 +9,7 @@ router.use(requireRoles('SUPER_ADMIN'));
 router.get('/institutions', AdminController.listInstitutions);
 router.patch('/institutions/:id/status', AdminController.setInstitutionStatus);
 router.post('/institutions/:id/provision-admin', AdminController.provisionInstitutionAdmin);
+router.post('/institutions/:id/key-custody', AdminController.setupKeyCustody);
 router.get('/telemetry', AdminController.getTelemetry);
 
 module.exports = router;

@@ -15,13 +15,15 @@
 
 This document certifies the successful completion of the full clean-room reengineering, security hardening, multi-tenant isolation, cryptographic verification, and automated test suite expansion for **Emertech Certify v2.0**.
 
-Emertech Certify v2.0 is an academic software demonstration and research prototype engineered to eliminate academic credential forgery and provide tamper-evident, decentralized verification without compromising student privacy. Developed under a strict clean-room protocol, every module—including Solidity smart contracts, Express backend controllers, Mongoose schemas, vector PDF generators, neural OCR services, and React 19 components—was independently authored by Saqib Ahmad Bhat.
+Emertech Certify v2.0 is an academic software demonstration and research prototype engineered to eliminate academic credential forgery and provide tamper-evident, decentralized verification without compromising student privacy. Developed under a strict clean-room protocol, every module—including Solidity smart contracts, Express backend controllers, Mongoose schemas, vector PDF generators, Tesseract.js OCR services, and React 19 components—was independently authored by Saqib Ahmad Bhat.
 
 The platform has achieved:
-- **100% Automated Test Pass Rate**: 14/14 Smart Contract Unit Tests (Hardhat EVM) + 34/34 Backend Integration Tests (Live EVM Consensus) = **48/48 Total Tests Passing** (0 Failures, 0 Skips).
+- **100% Automated Test Pass Rate**: 14/14 Smart Contract Unit Tests (Hardhat EVM) + 37/37 Backend Integration Tests (Live Local Hardhat EVM Integration) = **51/51 Total Tests Passing** (0 Failures, 0 Skips).
 - **Zero Exposed Credentials**: Verified absence of hardcoded private keys, JWT fallbacks, or plaintext secrets in tracked Git files.
-- **Robust Role-Based Access Control (RBAC)**: Complete remediation of privilege escalation vulnerabilities; public registration strictly enforces least-privilege `STUDENT` accounts; administrative accounts require out-of-band one-time CLI bootstrap or Super Admin governance provisioning.
-- **Hardened Key Custody (`KeyVaultService`)**: Authenticated AES-256-GCM encryption with 100,000-iteration PBKDF2 key derivation using independent `KEY_VAULT_SECRET`, persisted directly in MongoDB.
+- **Robust Role-Based Access Control (RBAC)**: Complete remediation of privilege escalation vulnerabilities; public registration strictly enforces least-privilege `STUDENT` accounts with an identity verification barrier; administrative accounts require out-of-band one-time CLI bootstrap or Super Admin governance provisioning.
+- **Hardened Key Custody (`KeyVaultService`)**: Authenticated AES-256-GCM encryption with 100,000-iteration PBKDF2 key derivation using independent, enforced `KEY_VAULT_SECRET` (min 32 chars), unique 32-byte per-record salts, and AAD bound to the institution wallet address.
+- **State Preservation Failure Invariants**: Unreachable or reverting blockchain transactions during suspension or revocation preserve the database state, return HTTP 502 Bad Gateway, and log failure telemetry to the audit trail.
+- **Real Persistent Institutional Key Custody**: Demonstrated end-to-end issuance using an independent, non-RPC unlocked wallet funded with test ETH, decrypted from database custody, with verified on-chain matching issuer address.
 - **Dual-Layer Privacy Architecture**: Zero Personally Identifiable Information (PII) on the blockchain; deterministic SHA-256 digests (NIST FIPS 180-4) with salted recipient pseudonymization.
 
 ---
@@ -42,7 +44,7 @@ All specifications, documentation, and configuration files accurately reflect th
 | **Password Hashing** | bcryptjs | `2.4.3` | Salted password hashing (10 rounds) |
 | **Vector Document Synthesis** | pdf-lib | `1.17.1` | In-memory binary vector PDF compilation (replaces Puppeteer) |
 | **2D Verification Stamping** | qrcode | `1.5.1` | Cryptographic QR code generation for certificate payloads |
-| **AI Neural OCR Engine** | Tesseract.js | `5.1.1` | WebAssembly-based optical character recognition for physical scans |
+| **Tesseract.js OCR Engine** | Tesseract.js | `5.1.1` | WebAssembly-based optical character recognition for physical scans |
 | **Frontend Framework** | React | `19.1.1` | Single-page application user interface |
 | **Client Routing** | react-router-dom | `6.14.1` | Client-side routing and protected navigation |
 | **Visual Design System** | Custom Glassmorphism | CSS Modules | Midnight navy `#0f172a` glassmorphic theme and original SVG branding |
@@ -51,32 +53,33 @@ All specifications, documentation, and configuration files accurately reflect th
 
 ## 3. Security Architecture & Threat Mitigation
 
-### 3.1 Authentication & Privilege Escalation Hardening
-- **Vulnerability Remediated**: In initial iterations, public registration accepted an arbitrary client-supplied `role` parameter, enabling callers to register directly as `SUPER_ADMIN` or `INSTITUTION_ADMIN`.
-- **Implementation in v2.0**:
-  1. `AuthController.register` enforces an explicit guard: any payload containing `role === 'SUPER_ADMIN'` or `role === 'INSTITUTION_ADMIN'` is rejected with **HTTP 403 Forbidden**.
-  2. The endpoint forces `role: 'STUDENT'`, with least-privilege defaults (`institutionCode: ''`, `walletAddress: ''`).
-  3. Email validation enforces standard RFC format, and password length requires a minimum of 8 characters.
+### 3.1 Authentication & Least Privilege Hardening
+- **Public Registration Guard**: `AuthController.register` enforces an explicit guard: any payload containing administrative roles is rejected with **HTTP 403 Forbidden**.
+- **Identity Self-Assertion Guard**: Clients attempting to supply `studentIdentifier` or `institutionCode` during public registration are rejected with **HTTP 400 Bad Request**. Public registration provisions an unassociated `STUDENT` account.
+- **Cryptographic Enrollment Claiming**: Students associate with an academic institution by providing an institution-issued cryptographic token via `POST /api/v2/auth/claim-identity`.
 
 ### 3.2 One-Time Super Administrator Bootstrap CLI
-- **Bootstrap Mechanism**: Administrative genesis cannot be triggered over the public network. A dedicated CLI script (`npm run bootstrap:admin` / `cleanroom/backend/scripts/bootstrap-super-admin.js`) performs a one-time database bootstrap.
-- **Invariant Protection**: The script queries `User.countDocuments({ role: 'SUPER_ADMIN' })`. If one or more Super Administrators already exist, execution is aborted immediately (`SUPER_ADMIN_ALREADY_EXISTS`), preventing unauthorized takeover.
+- **Bootstrap Mechanism**: Administrative genesis cannot be triggered over the public network. A dedicated CLI script (`cleanroom/backend/scripts/bootstrap-super-admin.js`) performs a one-time database bootstrap.
+- **Process Inspection Protection**: Rejects command-line argument passwords (`process.argv > 2`) to prevent credential snooping.
+- **Password Policy Enforcement**: Min 12 characters, requiring uppercase, lowercase, digit, and special character.
+- **Atomic Database Guard**: An atomic partial unique index on `{ role: 1 }` with `partialFilterExpression: { role: 'SUPER_ADMIN' }` prevents concurrent race conditions.
 
 ### 3.3 Protected Institution Administrator Provisioning
 - **Preconditions**: Only authenticated Super Administrators can provision Institution Administrators via `POST /api/v2/admin/institutions/:id/provision-admin`.
 - **Governance Requirement**: The target institution must exist in MongoDB, have `status === 'AUTHORIZED'`, and have confirmed on-chain accreditation (`onChainAuthorized: true`).
 - **Data Binding**: The provisioned administrator is immutably linked to the institution's verified `institutionCode` and `walletAddress`.
-- **Audit Logging**: Emits an `ADMIN_PROVISIONED` audit record with actor ID and target institution code.
 
 ### 3.4 Multi-Tenant Institutional Isolation (RBAC)
-- **Issuance Isolation**: When an `INSTITUTION_ADMIN` calls `POST /api/v2/institutions/issue` or `/batch`, the system strictly binds issuance to `req.user.institutionCode`. Cross-tenant issuance attempts are rejected.
+- **Issuance Isolation**: When an `INSTITUTION_ADMIN` calls `POST /api/v2/institutions/issue` or `/batch`, the system strictly binds issuance to `req.user.institutionCode`.
 - **Revocation Isolation**: When an administrator attempts to revoke a credential (`POST /api/v2/institutions/revoke`), the controller verifies that `certificate.institutionCode === req.user.institutionCode`. Cross-tenant revocations are rejected with **HTTP 403 Forbidden**.
+- **Student Data Isolation**: `GET /api/v2/certificates/student/my-certificates` requires verified identity and filters strictly by `{ studentIdentifier, institutionCode }`.
 
 ### 3.5 Institutional Key Custody (`KeyVaultService`)
-- **Independent Secret**: `KEY_VAULT_SECRET` is completely decoupled from `JWT_SECRET`.
-- **Key Derivation (KDF)**: Derives a 256-bit encryption key using PBKDF2 with 100,000 iterations of HMAC-SHA256 and salt `emertech-keyvault-kdf-salt-v2`.
-- **Authenticated Encryption**: Keys are encrypted using AES-256-GCM with unique 96-bit random IVs and 128-bit authentication tags.
-- **Persistent Storage**: Encrypted signing credentials (`encryptedPrivateKey`, `keyVaultIv`, `keyVaultTag`) are stored directly on the `Institution` document in MongoDB. Signers survive application restarts and are decrypted in memory only when signing transactions.
+- **Independent Secret**: `KEY_VAULT_SECRET` is strictly required outside test mode (minimum 32 characters).
+- **Per-Record Salt**: Generates unique 32-byte salts per institution record.
+- **Key Derivation (KDF)**: Derives a 256-bit encryption key using PBKDF2 with 100,000 iterations of HMAC-SHA256.
+- **Authenticated Encryption**: Keys are encrypted using AES-256-GCM with unique 96-bit random IVs, 128-bit authentication tags, and AAD bound to the institution's wallet address.
+- **Persistent Storage**: Encrypted signing credentials (`encryptedPrivateKey`, `keyVaultIv`, `keyVaultTag`, `keyDerivationSalt`, `keyVersion`) are stored directly on the `Institution` document in MongoDB.
 
 ### 3.6 Application Layer Security
 - **Security Response Headers**: Express middleware sets:

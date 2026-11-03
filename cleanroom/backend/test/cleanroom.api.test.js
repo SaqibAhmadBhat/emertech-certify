@@ -267,13 +267,101 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
+    // TEST 2B: KeyVault Cryptographic Invariants (PBKDF2, AES-256-GCM, Salt, Tamper Resistance)
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n2B. Testing KeyVault Cryptographic Invariants & Tamper Resistance...');
+      const crypto = require('crypto');
+      const testKey = '0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d';
+      const testWallet = new ethers.Wallet(testKey).address.toLowerCase();
+      const vaultSecret = 'TestVaultMasterSecretKeyMin32Chars2026!';
+
+      // 1. Encrypt and decrypt round trip
+      const enc1 = KeyVaultService.encryptPrivateKey(testKey, testWallet, null, vaultSecret);
+      assert.strictEqual(enc1.keyVersion, 1);
+      assert.ok(enc1.encryptedKey);
+      assert.ok(enc1.iv);
+      assert.ok(enc1.authTag);
+      assert.ok(enc1.salt);
+
+      const dec1 = KeyVaultService.decryptPrivateKey(enc1.encryptedKey, enc1.iv, enc1.authTag, enc1.salt, testWallet, vaultSecret);
+      assert.strictEqual(dec1, testKey, 'Decrypted key must match original private key');
+
+      // 2. Unique IV and salt per encryption
+      const enc2 = KeyVaultService.encryptPrivateKey(testKey, testWallet, null, vaultSecret);
+      assert.notStrictEqual(enc1.iv, enc2.iv, 'IVs must be uniquely generated for each encryption operation');
+      assert.notStrictEqual(enc1.salt, enc2.salt, 'Derivation salts must be uniquely generated');
+      assert.notStrictEqual(enc1.encryptedKey, enc2.encryptedKey, 'Ciphertexts must differ due to unique IV and salt');
+
+      // 3. Tampered ciphertext rejection (authenticated AES-256-GCM integrity check)
+      const tamperedCipher = enc1.encryptedKey.slice(0, -2) + (enc1.encryptedKey.endsWith('aa') ? 'bb' : 'aa');
+      assert.throws(
+        () => KeyVaultService.decryptPrivateKey(tamperedCipher, enc1.iv, enc1.authTag, enc1.salt, testWallet, vaultSecret),
+        /Unsupported state or unable to authenticate data/,
+        'Tampered ciphertext must fail authentication tag check'
+      );
+
+      // 4. Tampered auth tag rejection
+      const tamperedTag = enc1.authTag.slice(0, -2) + (enc1.authTag.endsWith('aa') ? 'bb' : 'aa');
+      assert.throws(
+        () => KeyVaultService.decryptPrivateKey(enc1.encryptedKey, enc1.iv, tamperedTag, enc1.salt, testWallet, vaultSecret),
+        /Unsupported state or unable to authenticate data/,
+        'Tampered authentication tag must cause decryption failure'
+      );
+
+      // 5. Tampered AAD (wallet address mismatch) rejection
+      assert.throws(
+        () => KeyVaultService.decryptPrivateKey(enc1.encryptedKey, enc1.iv, enc1.authTag, enc1.salt, '0x0000000000000000000000000000000000000001', vaultSecret),
+        /Unsupported state or unable to authenticate data/,
+        'Tampered Additional Authenticated Data (AAD) must trigger integrity failure'
+      );
+
+      // 6. Insufficient secret length rejection
+      assert.throws(
+        () => KeyVaultService.deriveKey(enc1.salt, 'short_secret'),
+        /KeyVault Error: Custom key vault secret must be at least 32 characters long/,
+        'Short master secret must be rejected'
+      );
+
+      // 7. Wallet address derivation mismatch on registration rejection
+      assert.throws(
+        () => KeyVaultService.registerInstitutionKey('0x0000000000000000000000000000000000000001', testKey),
+        /KeyVault Error: Private key derives wallet address/,
+        'Registering private key for mismatched wallet address must throw'
+      );
+
+      passedCount++;
+      console.log('   ✅ KeyVault PBKDF2/AES-256-GCM cryptography and tamper-resistance invariants verified.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ KeyVault cryptographic invariant test failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
     // TEST 3: One-Time Super Administrator Bootstrap via CLI Logic & Login
     // ------------------------------------------------------------------------
     try {
-      console.log('\n3. Testing One-Time Super Administrator Bootstrap via CLI Logic...');
+      console.log('\n3. Testing One-Time Super Administrator Bootstrap via CLI Logic & Password Policy...');
+
+      // 3a. Reject missing credentials
+      const missingRes = await bootstrapSuperAdmin({ email: '', password: '', fullName: '' });
+      assert.strictEqual(missingRes.success, false);
+      assert.strictEqual(missingRes.reason, 'MISSING_CREDENTIALS');
+
+      // 3b. Reject weak passwords (< 12 chars, missing special/digit)
+      const weakRes1 = await bootstrapSuperAdmin({ email: 'admin@emertech.org', password: 'weak', fullName: 'Admin' });
+      assert.strictEqual(weakRes1.success, false);
+      assert.strictEqual(weakRes1.reason, 'PASSWORD_TOO_WEAK');
+
+      const weakRes2 = await bootstrapSuperAdmin({ email: 'admin@emertech.org', password: 'alllowercasepassword123!', fullName: 'Admin' });
+      assert.strictEqual(weakRes2.success, false);
+      assert.strictEqual(weakRes2.reason, 'PASSWORD_TOO_WEAK');
+
+      // 3c. Successful bootstrap with compliant credentials
       const bootstrapRes = await bootstrapSuperAdmin({
         email: 'governance.admin@emertech-test.internal',
-        password: 'AdminSecurePassword2026!#',
+        password: 'GovernanceAdmin2026!#Strong',
         fullName: 'Test Governance Administrator'
       });
       assert.strictEqual(bootstrapRes.success, true);
@@ -282,14 +370,14 @@ async function runCleanroomTestSuite() {
       // Authenticate via login
       const loginRes = await makeRequest('POST', '/api/v2/auth/login', {
         email: 'governance.admin@emertech-test.internal',
-        password: 'AdminSecurePassword2026!#'
+        password: 'GovernanceAdmin2026!#Strong'
       });
       assert.strictEqual(loginRes.statusCode, 200);
       adminToken = loginRes.body.token;
       assert.ok(adminToken, 'Super Admin JWT must be returned');
 
       passedCount++;
-      console.log('   ✅ Super Administrator bootstrapped and authenticated successfully.');
+      console.log('   ✅ Super Administrator password policy enforced and authenticated successfully.');
     } catch (err) {
       failedCount++;
       console.error('   ❌ Super Admin bootstrap test failed:', err.message);
@@ -300,10 +388,10 @@ async function runCleanroomTestSuite() {
     // TEST 4: Enforcement of One-Time Bootstrap Invariant (Second Bootstrap Fails)
     // ------------------------------------------------------------------------
     try {
-      console.log('\n4. Testing Enforcement of One-Time Bootstrap Invariant...');
+      console.log('\n4. Testing Enforcement of One-Time Bootstrap Invariant & Atomic Database Guard...');
       const secondBootstrap = await bootstrapSuperAdmin({
-        email: 'attacker.admin@internal',
-        password: 'MaliciousPassword123!',
+        email: 'attacker.admin@internal.test',
+        password: 'MaliciousPassword2026!#Strong',
         fullName: 'Malicious Admin'
       });
       assert.strictEqual(secondBootstrap.success, false);
@@ -367,20 +455,48 @@ async function runCleanroomTestSuite() {
     // TEST 7: Public Registration Enforces Least-Privilege STUDENT Role Defaults
     // ------------------------------------------------------------------------
     try {
-      console.log('\n7. Testing Public Registration Least-Privilege STUDENT Role Defaults...');
-      const studentReg = await makeRequest('POST', '/api/v2/auth/register', {
+      console.log('\n7. Testing Public Registration Least-Privilege STUDENT Role & Identity Separation...');
+
+      // 7a. Reject client self-assertion of studentIdentifier
+      const badIdReg = await makeRequest('POST', '/api/v2/auth/register', {
         fullName: fictionalStudent.fullName,
         email: fictionalStudent.email,
         password: 'StudentPortalPassword2026!',
         studentIdentifier: fictionalStudent.studentIdentifier
       });
+      assert.strictEqual(badIdReg.statusCode, 400, 'Self-assertion of studentIdentifier must return 400 Bad Request');
+      assert.ok(badIdReg.body.message.includes('Direct self-assertion'));
+
+      // 7b. Reject client self-assertion of institutionCode
+      const badCodeReg = await makeRequest('POST', '/api/v2/auth/register', {
+        fullName: fictionalStudent.fullName,
+        email: fictionalStudent.email,
+        password: 'StudentPortalPassword2026!',
+        institutionCode: 'AIT'
+      });
+      assert.strictEqual(badCodeReg.statusCode, 400, 'Self-assertion of institutionCode must return 400 Bad Request');
+      assert.ok(badCodeReg.body.message.includes('Direct self-assertion'));
+
+      // 7c. Compliant registration with personal details only
+      const studentReg = await makeRequest('POST', '/api/v2/auth/register', {
+        fullName: fictionalStudent.fullName,
+        email: fictionalStudent.email,
+        password: 'StudentPortalPassword2026!'
+      });
       assert.strictEqual(studentReg.statusCode, 201);
       assert.strictEqual(studentReg.body.user.role, 'STUDENT');
+      assert.strictEqual(studentReg.body.user.studentIdentifier, null);
+      assert.strictEqual(studentReg.body.user.institutionCode, null);
       studentToken = studentReg.body.token;
       assert.ok(studentToken, 'Student JWT token must be issued');
 
+      // 7d. Unverified student cannot access student records
+      const unverifiedAccess = await makeRequest('GET', '/api/v2/certificates/student/my-certificates', null, studentToken);
+      assert.strictEqual(unverifiedAccess.statusCode, 403, 'Unverified student must receive 403 Forbidden');
+      assert.ok(unverifiedAccess.body.message.includes('unverified'));
+
       passedCount++;
-      console.log('   ✅ Public registration enforced least-privilege STUDENT account.');
+      console.log('   ✅ Public registration enforced least-privilege STUDENT account with identity verification barrier.');
     } catch (err) {
       failedCount++;
       console.error('   ❌ Student registration test failed:', err.message);
@@ -509,10 +625,37 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 12: Institution Status Transition to SUSPENDED on Smart Contract
+    // TEST 12: Institution Status Transition to SUSPENDED on Smart Contract & Resilient Failure Handling
     // ------------------------------------------------------------------------
     try {
-      console.log('\n12. Testing Institution Status Transition to SUSPENDED...');
+      console.log('\n12. Testing Institution Status Transition to SUSPENDED & Failure Invariant...');
+
+      // 12a. Suspension failure handling: preserve DB state when blockchain is down
+      const activeRpc = process.env.BLOCKCHAIN_RPC_URL || 'http://127.0.0.1:8545';
+      reconfigureBlockchain({ rpcUrl: 'http://127.0.0.1:9999', contractAddress: deployedContractAddress });
+
+      const failSuspend = await makeRequest(
+        'PATCH',
+        `/api/v2/admin/institutions/${approvedInstId}/status`,
+        { status: 'SUSPENDED' },
+        adminToken
+      );
+      assert.strictEqual(failSuspend.statusCode, 502, 'Unreachable blockchain must return 502 Bad Gateway');
+      assert.strictEqual(failSuspend.body.onChain, false);
+
+      // Verify MongoDB state is NOT corrupted: institution remains AUTHORIZED
+      const checkDbInst = await Institution.findById(approvedInstId);
+      assert.strictEqual(checkDbInst.status, 'AUTHORIZED', 'MongoDB status must NOT be modified when blockchain call fails');
+
+      // Verify failure logged to AuditLog
+      const AuditLog = require('../src/models/AuditLog');
+      const failLog = await AuditLog.findOne({ eventType: 'INSTITUTION_SUSPENSION_FAILED' }).sort({ createdAt: -1 });
+      assert.ok(failLog, 'AuditLog must record INSTITUTION_SUSPENSION_FAILED');
+
+      // Restore blockchain connection
+      reconfigureBlockchain({ rpcUrl: activeRpc, contractAddress: deployedContractAddress });
+
+      // 12b. Normal successful suspension with active blockchain
       const suspendRes = await makeRequest(
         'PATCH',
         `/api/v2/admin/institutions/${approvedInstId}/status`,
@@ -710,6 +853,120 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
+    // TEST 18B: Verified Student Enrollment Token Lifecycle & Identity Claiming
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n18B. Testing Student Enrollment Token Generation & Identity Claiming...');
+
+      // 18B.1: Student cannot create enrollment tokens
+      const unauthEnroll = await makeRequest(
+        'POST',
+        '/api/v2/institutions/enrollments',
+        {
+          studentIdentifier: fictionalStudent.studentIdentifier,
+          studentName: fictionalStudent.fullName,
+          studentEmail: fictionalStudent.email
+        },
+        studentToken
+      );
+      assert.strictEqual(unauthEnroll.statusCode, 403, 'Student cannot generate enrollment tokens');
+
+      // 18B.2: Institution Admin generates enrollment token
+      const enrollRes = await makeRequest(
+        'POST',
+        '/api/v2/institutions/enrollments',
+        {
+          studentIdentifier: fictionalStudent.studentIdentifier,
+          studentName: fictionalStudent.fullName,
+          studentEmail: fictionalStudent.email
+        },
+        instToken
+      );
+      assert.strictEqual(enrollRes.statusCode, 201);
+      assert.strictEqual(enrollRes.body.success, true);
+      const enrollmentToken = enrollRes.body.enrollment.enrollmentToken;
+      assert.ok(enrollmentToken && enrollmentToken.startsWith('ENR-'));
+
+      // 18B.3: Duplicate enrollment generation rejected with 409 Conflict
+      const dupEnroll = await makeRequest(
+        'POST',
+        '/api/v2/institutions/enrollments',
+        {
+          studentIdentifier: fictionalStudent.studentIdentifier,
+          studentName: fictionalStudent.fullName,
+          studentEmail: fictionalStudent.email
+        },
+        instToken
+      );
+      assert.strictEqual(dupEnroll.statusCode, 409, 'Duplicate student enrollment must return 409 Conflict');
+
+      // 18B.4: Student claims with invalid token rejected with 404
+      const badClaim = await makeRequest(
+        'POST',
+        '/api/v2/auth/claim-identity',
+        {
+          enrollmentToken: 'ENR-NONEXISTENTTOKEN12345',
+          studentIdentifier: fictionalStudent.studentIdentifier
+        },
+        studentToken
+      );
+      assert.strictEqual(badClaim.statusCode, 404, 'Invalid token must return 404 Not Found');
+
+      // 18B.5: Student claims with mismatched ID rejected with 404
+      const badClaimId = await makeRequest(
+        'POST',
+        '/api/v2/auth/claim-identity',
+        {
+          enrollmentToken,
+          studentIdentifier: 'STU-MISMATCHED-9999'
+        },
+        studentToken
+      );
+      assert.strictEqual(badClaimId.statusCode, 404, 'Mismatched student identifier must return 404 Not Found');
+
+      // 18B.6: Successful claim binds student identity and returns refreshed JWT
+      const goodClaim = await makeRequest(
+        'POST',
+        '/api/v2/auth/claim-identity',
+        {
+          enrollmentToken,
+          studentIdentifier: fictionalStudent.studentIdentifier
+        },
+        studentToken
+      );
+      assert.strictEqual(goodClaim.statusCode, 200);
+      assert.strictEqual(goodClaim.body.success, true);
+      assert.strictEqual(goodClaim.body.user.studentIdentifier, fictionalStudent.studentIdentifier);
+      assert.strictEqual(goodClaim.body.user.institutionCode, 'AIT');
+      studentToken = goodClaim.body.token; // Update studentToken to refreshed JWT with verified identity
+      assert.ok(studentToken);
+
+      // 18B.7: Second claim attempt of same token rejected with 409 Conflict
+      const reClaim = await makeRequest(
+        'POST',
+        '/api/v2/auth/claim-identity',
+        {
+          enrollmentToken,
+          studentIdentifier: fictionalStudent.studentIdentifier
+        },
+        studentToken
+      );
+      assert.strictEqual(reClaim.statusCode, 409, 'Already claimed token must return 409 Conflict');
+
+      // 18B.8: Verified student can now access student portal endpoint
+      const verifiedAccess = await makeRequest('GET', '/api/v2/certificates/student/my-certificates', null, studentToken);
+      assert.strictEqual(verifiedAccess.statusCode, 200, 'Verified student can access transcripts');
+      assert.strictEqual(verifiedAccess.body.count, 0, 'No certificates issued yet');
+
+      passedCount++;
+      console.log('   ✅ Student enrollment token generation, cryptographic claim, and access authorization verified.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ Student enrollment verification failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
     // TEST 19: Persistent Institutional Key Custody (AES-256-GCM via PBKDF2 & Database Signer)
     // ------------------------------------------------------------------------
     try {
@@ -806,6 +1063,138 @@ async function runCleanroomTestSuite() {
     } catch (err) {
       failedCount++;
       console.error('   ❌ On-chain certificate issuance failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 20B: Real Persistent Key Custody & EVM Issuance (Non-RPC Unlocked Wallet Funded with ETH)
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n20B. Testing Real Persistent Institutional Key Custody & EVM Issuance (Non-RPC Wallet)...');
+      const pWallet = ethers.Wallet.createRandom();
+      const rpcUrl = process.env.BLOCKCHAIN_RPC_URL || 'http://127.0.0.1:8545';
+      const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+      const accounts = await provider.listAccounts();
+      assert.strictEqual(
+        accounts.map(a => a.toLowerCase()).includes(pWallet.address.toLowerCase()),
+        false,
+        'Security Invariant: Persistent wallet must NOT be an unlocked account on the JSON-RPC node'
+      );
+
+      // Fund the persistent wallet with 1.0 test ETH from deployer (account 0)
+      const deployerSigner = provider.getSigner(0);
+      const fundTx = await deployerSigner.sendTransaction({
+        to: pWallet.address,
+        value: ethers.utils.parseEther('1.0')
+      });
+      await fundTx.wait(1);
+
+      const balance = await provider.getBalance(pWallet.address);
+      assert.ok(balance.gt(0), 'Persistent wallet must be funded with test ETH');
+
+      // Apply for institution
+      const pksApp = await makeRequest('POST', '/api/v2/institutions/apply', {
+        institutionCode: 'PKS',
+        name: 'Persistent Key Signer University',
+        officialDomain: 'pks.edu.test',
+        contactEmail: 'security@pks.edu.test',
+        walletAddress: pWallet.address
+      });
+      assert.strictEqual(pksApp.statusCode, 201);
+      const pksInstId = pksApp.body.institution._id;
+
+      // Authorize institution on-chain via Super Admin
+      const pksAuth = await makeRequest(
+        'PATCH',
+        `/api/v2/admin/institutions/${pksInstId}/status`,
+        { status: 'AUTHORIZED' },
+        adminToken
+      );
+      assert.strictEqual(pksAuth.statusCode, 200);
+
+      // Store private key in custody via API endpoint
+      const pksCustody = await makeRequest(
+        'POST',
+        `/api/v2/admin/institutions/${pksInstId}/key-custody`,
+        { privateKey: pWallet.privateKey },
+        adminToken
+      );
+      assert.strictEqual(pksCustody.statusCode, 200);
+      assert.strictEqual(pksCustody.body.success, true);
+
+      // Verify persistent encrypted fields in MongoDB
+      const pksDbInst = await Institution.findById(pksInstId);
+      assert.ok(pksDbInst.encryptedPrivateKey, 'Encrypted key must be persisted');
+      assert.ok(pksDbInst.keyDerivationSalt, 'Derivation salt must be persisted');
+      assert.strictEqual(pksDbInst.keyVersion, 1);
+      assert.notStrictEqual(pksDbInst.encryptedPrivateKey, pWallet.privateKey);
+
+      // Provision institution admin for PKS
+      const pksProv = await makeRequest(
+        'POST',
+        `/api/v2/admin/institutions/${pksInstId}/provision-admin`,
+        {
+          fullName: 'PKS Registrar',
+          email: 'registrar@pks.edu.test',
+          password: 'PksRegistrar2026!Secure'
+        },
+        adminToken
+      );
+      assert.strictEqual(pksProv.statusCode, 201);
+
+      // Login as PKS Admin
+      const pksLogin = await makeRequest('POST', '/api/v2/auth/login', {
+        email: 'registrar@pks.edu.test',
+        password: 'PksRegistrar2026!Secure'
+      });
+      assert.strictEqual(pksLogin.statusCode, 200);
+      const pksToken = pksLogin.body.token;
+
+      // CRITICAL STEP: Clear the in-memory key cache completely
+      KeyVaultService.resetVault();
+
+      // Issue certificate as PKS Admin: BlockchainService MUST load and decrypt from DB
+      const pksStudent = {
+        fullName: 'Alice P. Wonder',
+        studentName: 'Alice P. Wonder',
+        email: 'alice@pks.edu.test',
+        studentIdentifier: 'STU-PKS-9901',
+        degreeTitle: 'Master of Science',
+        majorProgram: 'Distributed Computing',
+        graduationDate: '2026-06-30',
+        gradeOrDistinction: 'First Class with Distinction'
+      };
+
+      const pksIssueRes = await makeRequest(
+        'POST',
+        '/api/v2/institutions/issue',
+        pksStudent,
+        pksToken
+      );
+      assert.strictEqual(pksIssueRes.statusCode, 201);
+      assert.strictEqual(pksIssueRes.body.certificate.onChain, true);
+      assert.ok(pksIssueRes.body.certificate.txHash);
+      assert.match(pksIssueRes.body.certificate.txHash, /^0x[a-fA-F0-9]{64}$/);
+
+      // Verify directly on EVM smart contract that issuer matches pWallet.address
+      const pksCertHash = pksIssueRes.body.certificate.certHash;
+      const onChainRecordPks = await directContractInstance.verifyCertificate(pksCertHash);
+      assert.strictEqual(onChainRecordPks.exists, true);
+      assert.strictEqual(
+        onChainRecordPks.issuer.toLowerCase(),
+        pWallet.address.toLowerCase(),
+        'EVM contract issuer MUST match the persistent decrypted institution wallet'
+      );
+      assert.strictEqual(
+        pksIssueRes.body.certificate.onChainIssuer.toLowerCase(),
+        pWallet.address.toLowerCase()
+      );
+
+      passedCount++;
+      console.log('   ✅ Real persistent institutional key custody verified: Decrypted non-RPC key signed EVM transaction.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ Real persistent key custody issuance failed:', err.message);
       throw err;
     }
 
@@ -1008,10 +1397,38 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 28: Real On-Chain Certificate Revocation by Issuing Institution
+    // TEST 28: Real On-Chain Certificate Revocation by Issuing Institution & Resilient Failure Handling
     // ------------------------------------------------------------------------
     try {
-      console.log('\n28. Testing Real On-Chain Certificate Revocation by Issuing Institution...');
+      console.log('\n28. Testing Real On-Chain Certificate Revocation & Blockchain Failure Invariant...');
+
+      // 28a. Revocation failure handling when blockchain unreachable
+      const activeRpc = process.env.BLOCKCHAIN_RPC_URL || 'http://127.0.0.1:8545';
+      reconfigureBlockchain({ rpcUrl: 'http://127.0.0.1:9999', contractAddress: deployedContractAddress });
+
+      const failRevoke = await makeRequest(
+        'POST',
+        '/api/v2/institutions/revoke',
+        { certHash: testCertHash, reason: 'Failed attempt test' },
+        instToken
+      );
+      assert.strictEqual(failRevoke.statusCode, 502, 'Revocation must return 502 Bad Gateway when blockchain is down');
+      assert.strictEqual(failRevoke.body.onChain, false);
+
+      // Verify DB certificate remains unrevoked (isRevoked: false)
+      const Certificate = require('../src/models/Certificate');
+      const certDb = await Certificate.findOne({ certHash: testCertHash });
+      assert.strictEqual(certDb.isRevoked, false, 'MongoDB certificate isRevoked must NOT be set to true if onChain is false');
+
+      // Verify AuditLog recorded failure
+      const AuditLog = require('../src/models/AuditLog');
+      const revFailLog = await AuditLog.findOne({ eventType: 'REVOCATION_FAILED' }).sort({ createdAt: -1 });
+      assert.ok(revFailLog, 'AuditLog must record REVOCATION_FAILED');
+
+      // Restore blockchain connection
+      reconfigureBlockchain({ rpcUrl: activeRpc, contractAddress: deployedContractAddress });
+
+      // 28b. Normal successful revocation with active blockchain
       const revokeRes = await makeRequest(
         'POST',
         '/api/v2/institutions/revoke',

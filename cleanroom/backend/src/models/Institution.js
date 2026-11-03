@@ -59,6 +59,14 @@ const institutionSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  keyDerivationSalt: {
+    type: String,
+    default: null
+  },
+  keyVersion: {
+    type: Number,
+    default: 1
+  },
   accreditedBy: {
     type: String,
     default: 'National Accreditation Board'

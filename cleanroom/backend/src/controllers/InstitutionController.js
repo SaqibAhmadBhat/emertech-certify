@@ -1,6 +1,8 @@
+const crypto = require('crypto');
 const Certificate = require('../models/Certificate');
 const Institution = require('../models/Institution');
 const AuditLog = require('../models/AuditLog');
+const StudentEnrollment = require('../models/StudentEnrollment');
 const CryptoService = require('../services/CryptoService');
 const PdfVectorService = require('../services/PdfVectorService');
 const BlockchainService = require('../services/BlockchainService');
@@ -344,18 +346,39 @@ class InstitutionController {
         revokerWallet
       );
 
-      if (!bcRes.onChain && bcRes.error && bcRes.error.includes('UnauthorizedRevocation')) {
-        return res.status(403).json({
+      if (!bcRes.onChain) {
+        await AuditLog.create({
+          eventType: 'REVOCATION_FAILED',
+          certHash,
+          actorId: req.user._id,
+          actorEmail: req.user.email,
+          actorRole: req.user.role,
+          clientIp: req.ip,
+          diagnosticDetails: { reason, error: bcRes.error, revoker: revokerWallet }
+        });
+
+        if (bcRes.error && bcRes.error.includes('UnauthorizedRevocation')) {
+          return res.status(403).json({
+            success: false,
+            message: 'Unauthorized on-chain revocation: caller wallet is not the issuing institution or contract owner.',
+            onChain: false,
+            error: bcRes.error
+          });
+        }
+
+        return res.status(502).json({
           success: false,
-          message: 'Unauthorized on-chain revocation: caller wallet is not the issuing institution or contract owner.'
+          message: `On-chain certificate revocation failed: ${bcRes.error || 'Transaction reverted or blockchain unavailable.'}`,
+          onChain: false,
+          error: bcRes.error
         });
       }
 
-      // 2. Update Database Record
+      // 2. Update Database Record ONLY after confirmed on-chain
       certificate.isRevoked = true;
       certificate.revokedAt = new Date();
       certificate.revocationReason = reason || 'Administrative correction';
-      certificate.revocationTxHash = bcRes.txHash || null;
+      certificate.revocationTxHash = bcRes.txHash;
       await certificate.save();
 
       // 3. Log Audit
@@ -366,21 +389,19 @@ class InstitutionController {
         actorEmail: req.user.email,
         actorRole: req.user.role,
         clientIp: req.ip,
-        diagnosticDetails: { reason, txHash: bcRes.txHash, onChain: bcRes.onChain, revoker: revokerWallet }
+        diagnosticDetails: { reason, txHash: bcRes.txHash, onChain: true, revoker: revokerWallet }
       });
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
-        message: bcRes.onChain
-          ? 'Certificate successfully revoked on-chain and in off-chain registry.'
-          : 'Certificate revoked in off-chain registry (smart contract was not connected).',
+        message: 'Certificate successfully revoked on-chain and in off-chain registry.',
         certificate: {
           certHash: certificate.certHash,
-          isRevoked: certificate.isRevoked,
+          isRevoked: true,
           revokedAt: certificate.revokedAt,
           revocationReason: certificate.revocationReason,
           txHash: bcRes.txHash,
-          onChain: bcRes.onChain
+          onChain: true
         }
       });
     } catch (err) {
@@ -405,6 +426,114 @@ class InstitutionController {
         success: true,
         count: certificates.length,
         certificates
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async createEnrollment(req, res, next) {
+    try {
+      const instCode = (req.user.institutionCode || (req.user.role === 'SUPER_ADMIN' ? req.body.institutionCode : null) || '').toUpperCase().trim();
+      if (!instCode) {
+        return res.status(400).json({ success: false, message: 'Institution code is required.' });
+      }
+
+      const { studentIdentifier, studentName, studentEmail } = req.body;
+      if (!studentIdentifier || !studentName || !studentEmail) {
+        return res.status(400).json({
+          success: false,
+          message: 'Student identifier, student name, and student email are required.'
+        });
+      }
+
+      const cleanIdentifier = studentIdentifier.toUpperCase().trim();
+      const cleanEmail = studentEmail.toLowerCase().trim();
+
+      const existing = await StudentEnrollment.findOne({
+        institutionCode: instCode,
+        studentIdentifier: cleanIdentifier
+      });
+
+      if (existing) {
+        return res.status(409).json({
+          success: false,
+          message: `An enrollment record already exists for student identifier ${cleanIdentifier} at institution ${instCode}.`
+        });
+      }
+
+      const enrollmentToken = 'ENR-' + crypto.randomBytes(16).toString('hex').toUpperCase();
+
+      const enrollment = await StudentEnrollment.create({
+        institutionCode: instCode,
+        studentIdentifier: cleanIdentifier,
+        studentName: studentName.trim(),
+        studentEmail: cleanEmail,
+        enrollmentToken
+      });
+
+      await AuditLog.create({
+        eventType: 'STUDENT_ENROLLED',
+        actorId: req.user._id,
+        actorEmail: req.user.email,
+        actorRole: req.user.role,
+        institutionCode: instCode,
+        clientIp: req.ip,
+        diagnosticDetails: {
+          studentIdentifier: cleanIdentifier,
+          studentEmail: cleanEmail,
+          enrollmentId: enrollment._id
+        }
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Student enrollment token successfully generated.',
+        enrollment: {
+          id: enrollment._id,
+          institutionCode: enrollment.institutionCode,
+          studentIdentifier: enrollment.studentIdentifier,
+          studentName: enrollment.studentName,
+          studentEmail: enrollment.studentEmail,
+          enrollmentToken: enrollment.enrollmentToken
+        }
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async setupKeyCustody(req, res, next) {
+    try {
+      const instCode = (req.user.institutionCode || (req.user.role === 'SUPER_ADMIN' ? req.body.institutionCode : null) || '').toUpperCase().trim();
+      if (!instCode) {
+        return res.status(400).json({ success: false, message: 'Institution code is required.' });
+      }
+
+      const { privateKey } = req.body;
+      if (!privateKey) {
+        return res.status(400).json({ success: false, message: 'Private key is required.' });
+      }
+
+      const institution = await Institution.findOne({ institutionCode: instCode });
+      if (!institution) {
+        return res.status(404).json({ success: false, message: 'Institution not found.' });
+      }
+
+      const KeyVaultService = require('../services/KeyVaultService');
+      const custodyRecord = await KeyVaultService.storeInstitutionEncryptedKey(
+        institution._id,
+        privateKey
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: 'Institutional private key custody securely established.',
+        custody: {
+          institutionCode: instCode,
+          walletAddress: institution.walletAddress,
+          keyVersion: custodyRecord.keyVersion
+        }
       });
     } catch (err) {
       next(err);

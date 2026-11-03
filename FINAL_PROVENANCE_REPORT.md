@@ -41,10 +41,10 @@ To evaluate source-level independence, a reproducible automated scanning tool ([
 ================================================================================
 🔬 REPRODUCIBLE CLEAN-ROOM PROVENANCE SCAN METRICS
 ================================================================================
-  Clean-Room Source Files Scanned:      68
+  Clean-Room Source Files Scanned:      69
   Legacy Upstream Files Scanned:        79
   Exact File Matches:                    0
-  Files with 3-Line Boilerplate:        14
+  Files with 3-Line Boilerplate:        15
   5+ Line Overlaps (Manifests/HTML5):    3
   Copied Proprietary Implementation:     0 lines
 ================================================================================
@@ -87,7 +87,7 @@ To maintain absolute legal integrity and respect upstream copyright licenses, Em
 ## 4. Branch Isolation & Commit Provenance
 
 - **Branch Isolation**: Clean-room development was executed and verified on the isolated `cleanroom-independent` branch to avoid modifying or obscuring historical Git commits.
-- **Merge Strategy**: Following complete test verification (14 contract tests, 34 backend integration tests, and React 19 production build), `cleanroom-independent` was fast-forward merged into `main`, keeping both branches synchronized without destructive Git operations or history rewriting.
+- **Merge Strategy**: Following complete test verification (14 contract tests, 37 backend integration tests, and React 19 production build), `cleanroom-independent` was synchronized with `main`, keeping both branches aligned without destructive Git operations or history rewriting.
 
 ---
 

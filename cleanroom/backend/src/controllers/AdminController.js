@@ -4,6 +4,7 @@ const Certificate = require('../models/Certificate');
 const AuditLog = require('../models/AuditLog');
 const User = require('../models/User');
 const BlockchainService = require('../services/BlockchainService');
+const KeyVaultService = require('../services/KeyVaultService');
 
 class AdminController {
   static async listInstitutions(req, res, next) {
@@ -100,9 +101,28 @@ class AdminController {
           institution.name,
           institution.officialDomain
         );
+
+        if (!suspResult.onChain) {
+          await AuditLog.create({
+            eventType: 'INSTITUTION_SUSPENSION_FAILED',
+            actorId: req.user._id,
+            actorEmail: req.user.email,
+            actorRole: req.user.role,
+            clientIp: req.ip,
+            diagnosticDetails: { institutionId: institution._id, code: institution.institutionCode, error: suspResult.error }
+          });
+
+          return res.status(502).json({
+            success: false,
+            message: `On-chain institution suspension failed: ${suspResult.error || 'Transaction reverted or blockchain unavailable.'}`,
+            onChain: false,
+            error: suspResult.error
+          });
+        }
+
         institution.status = 'SUSPENDED';
         institution.onChainAuthorized = false;
-        institution.onChainStatus = suspResult.onChain ? 'SUSPENDED' : institution.onChainStatus;
+        institution.onChainStatus = 'SUSPENDED';
         await institution.save();
 
         await AuditLog.create({
@@ -111,14 +131,15 @@ class AdminController {
           actorEmail: req.user.email,
           actorRole: req.user.role,
           clientIp: req.ip,
-          diagnosticDetails: { institutionId: institution._id, code: institution.institutionCode, onChain: suspResult.onChain }
+          diagnosticDetails: { institutionId: institution._id, code: institution.institutionCode, txHash: suspResult.txHash, onChain: true }
         });
 
         return res.status(200).json({
           success: true,
-          message: 'Institution suspended successfully.',
+          message: 'Institution suspended successfully on-chain and off-chain.',
           institution,
-          onChain: suspResult.onChain
+          onChain: true,
+          txHash: suspResult.txHash
         });
       }
 
@@ -128,9 +149,28 @@ class AdminController {
           institution.name,
           institution.officialDomain
         );
+
+        if (!revResult.onChain) {
+          await AuditLog.create({
+            eventType: 'INSTITUTION_REVOCATION_FAILED',
+            actorId: req.user._id,
+            actorEmail: req.user.email,
+            actorRole: req.user.role,
+            clientIp: req.ip,
+            diagnosticDetails: { institutionId: institution._id, code: institution.institutionCode, error: revResult.error }
+          });
+
+          return res.status(502).json({
+            success: false,
+            message: `On-chain institution revocation failed: ${revResult.error || 'Transaction reverted or blockchain unavailable.'}`,
+            onChain: false,
+            error: revResult.error
+          });
+        }
+
         institution.status = 'REVOKED';
         institution.onChainAuthorized = false;
-        institution.onChainStatus = revResult.onChain ? 'REVOKED' : institution.onChainStatus;
+        institution.onChainStatus = 'REVOKED';
         await institution.save();
 
         await AuditLog.create({
@@ -139,14 +179,15 @@ class AdminController {
           actorEmail: req.user.email,
           actorRole: req.user.role,
           clientIp: req.ip,
-          diagnosticDetails: { institutionId: institution._id, code: institution.institutionCode, onChain: revResult.onChain }
+          diagnosticDetails: { institutionId: institution._id, code: institution.institutionCode, txHash: revResult.txHash, onChain: true }
         });
 
         return res.status(200).json({
           success: true,
-          message: 'Institution revoked successfully.',
+          message: 'Institution revoked successfully on-chain and off-chain.',
           institution,
-          onChain: revResult.onChain
+          onChain: true,
+          txHash: revResult.txHash
         });
       }
 
@@ -242,6 +283,51 @@ class AdminController {
         }
       });
     } catch (err) {
+      next(err);
+    }
+  }
+
+  static async setupKeyCustody(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { privateKey } = req.body;
+
+      if (!privateKey) {
+        return res.status(400).json({ success: false, message: 'Private key is required for institutional key custody setup.' });
+      }
+
+      const institution = await Institution.findById(id);
+      if (!institution) {
+        return res.status(404).json({ success: false, message: 'Institution record not found.' });
+      }
+
+      const storeResult = await KeyVaultService.storeInstitutionEncryptedKey(institution._id, privateKey);
+
+      await AuditLog.create({
+        eventType: 'SECURITY_ALERT',
+        actorId: req.user._id,
+        actorEmail: req.user.email,
+        actorRole: req.user.role,
+        clientIp: req.ip,
+        diagnosticDetails: {
+          action: 'INSTITUTION_KEY_CUSTODY_PROVISIONED',
+          institutionCode: institution.institutionCode,
+          walletAddress: institution.walletAddress,
+          keyVersion: storeResult.keyVersion
+        }
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: `Persistent signing credential encrypted and stored in custody for ${institution.name}.`,
+        institutionCode: institution.institutionCode,
+        walletAddress: institution.walletAddress,
+        keyVersion: storeResult.keyVersion
+      });
+    } catch (err) {
+      if (err.message && err.message.includes('KeyVault Error')) {
+        return res.status(400).json({ success: false, message: err.message });
+      }
       next(err);
     }
   }

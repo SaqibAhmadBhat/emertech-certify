@@ -1,17 +1,18 @@
 const jwt = require('jsonwebtoken');
 const config = require('../config/env');
 const User = require('../models/User');
+const StudentEnrollment = require('../models/StudentEnrollment');
 const AuditLog = require('../models/AuditLog');
 
 class AuthController {
   /**
    * Public Registration Endpoint:
    * RESTRICTED TO LEAST-PRIVILEGE STUDENT ACCOUNTS ONLY.
-   * Any client attempting to supply SUPER_ADMIN or INSTITUTION_ADMIN is strictly rejected.
+   * Any client attempting to supply administrative roles or self-assert institutional identity is strictly rejected.
    */
   static async register(req, res, next) {
     try {
-      const { fullName, email, password, role, studentIdentifier } = req.body;
+      const { fullName, email, password, role, studentIdentifier, institutionCode } = req.body;
 
       if (!fullName || !email || !password) {
         return res.status(400).json({ success: false, message: 'Full name, email, and password are required.' });
@@ -25,7 +26,18 @@ class AuthController {
         });
       }
 
-      // 2. Email & Password Validation
+      // 2. Identity Self-Assertion Guard:
+      // Direct self-assertion of studentIdentifier or institutionCode is forbidden.
+      // Students must register with personal credentials and claim their institutional identity
+      // via an institution-issued cryptographic enrollment token.
+      if (studentIdentifier !== undefined || institutionCode !== undefined) {
+        return res.status(400).json({
+          success: false,
+          message: 'Direct self-assertion of student identifier or institution code is not permitted during public registration. Register your account first, then claim your verified identity using an institution-issued enrollment token.'
+        });
+      }
+
+      // 3. Email & Password Validation
       const cleanEmail = email.toLowerCase().trim();
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(cleanEmail)) {
@@ -41,34 +53,144 @@ class AuthController {
         return res.status(409).json({ success: false, message: 'A user account with this email already exists.' });
       }
 
-      // 3. Enforce Least-Privilege Student Role
+      // 4. Enforce Least-Privilege Student Role with Unverified Identity
       const passwordHash = await User.hashPassword(password);
       const user = await User.create({
         fullName: fullName.trim(),
         email: cleanEmail,
         passwordHash,
         role: 'STUDENT',
-        studentIdentifier: studentIdentifier ? studentIdentifier.trim() : '',
-        institutionCode: '',
+        studentIdentifier: null,
+        institutionCode: null,
         walletAddress: '',
         isActive: true
       });
 
       const token = jwt.sign(
-        { id: user._id, email: user.email, role: user.role, institutionCode: '' },
+        { id: user._id, email: user.email, role: user.role, institutionCode: null, studentIdentifier: null },
         config.jwtSecret,
         { expiresIn: config.jwtExpiresIn }
       );
 
       res.status(201).json({
         success: true,
-        message: 'Student account registered successfully.',
+        message: 'Student account registered successfully. Please claim your institutional identity using your institution-issued enrollment token.',
         token,
         user: {
           id: user._id,
           fullName: user.fullName,
           email: user.email,
           role: user.role,
+          studentIdentifier: null,
+          institutionCode: null
+        }
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Student Identity Claiming Endpoint:
+   * Cryptographically verifies student enrollment against institution-issued tokens
+   * before associating studentIdentifier and institutionCode to the student's User account.
+   */
+  static async claimStudentIdentity(req, res, next) {
+    try {
+      if (req.user.role !== 'STUDENT') {
+        return res.status(403).json({ success: false, message: 'Only student accounts may claim student enrollments.' });
+      }
+
+      const { enrollmentToken, studentIdentifier } = req.body;
+      if (!enrollmentToken || !studentIdentifier) {
+        return res.status(400).json({
+          success: false,
+          message: 'Both enrollmentToken and studentIdentifier are required to claim academic identity.'
+        });
+      }
+
+      const cleanToken = enrollmentToken.trim();
+      const cleanId = studentIdentifier.toUpperCase().trim();
+
+      const enrollment = await StudentEnrollment.findOne({
+        enrollmentToken: cleanToken,
+        studentIdentifier: cleanId
+      });
+
+      if (!enrollment) {
+        return res.status(404).json({
+          success: false,
+          message: 'Enrollment verification failed: No matching enrollment record found for the provided token and student identifier.'
+        });
+      }
+
+      if (enrollment.isClaimed) {
+        return res.status(409).json({
+          success: false,
+          message: 'This enrollment record has already been claimed and bound to an account.'
+        });
+      }
+
+      // Check if user is already bound to a different studentIdentifier
+      const user = await User.findById(req.user._id);
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'User record not found.' });
+      }
+
+      if (user.studentIdentifier && user.studentIdentifier !== cleanId) {
+        return res.status(409).json({
+          success: false,
+          message: `User is already associated with student identifier: ${user.studentIdentifier}. Identity re-binding is not permitted.`
+        });
+      }
+
+      // Atomically link student identity
+      enrollment.isClaimed = true;
+      enrollment.claimedByUserId = user._id;
+      enrollment.claimedAt = new Date();
+      await enrollment.save();
+
+      user.studentIdentifier = enrollment.studentIdentifier;
+      user.institutionCode = enrollment.institutionCode;
+      await user.save();
+
+      await AuditLog.create({
+        eventType: 'STUDENT_IDENTITY_CLAIMED',
+        actorId: user._id,
+        actorEmail: user.email,
+        actorRole: user.role,
+        institutionCode: enrollment.institutionCode,
+        clientIp: req.ip,
+        diagnosticDetails: {
+          studentIdentifier: enrollment.studentIdentifier,
+          institutionCode: enrollment.institutionCode,
+          enrollmentId: enrollment._id
+        }
+      });
+
+      // Issue refreshed JWT with verified claims
+      const token = jwt.sign(
+        {
+          id: user._id,
+          email: user.email,
+          role: user.role,
+          institutionCode: user.institutionCode,
+          studentIdentifier: user.studentIdentifier
+        },
+        config.jwtSecret,
+        { expiresIn: config.jwtExpiresIn }
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Student identity verified and successfully bound to account.',
+        token,
+        user: {
+          id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
+          institutionCode: user.institutionCode,
           studentIdentifier: user.studentIdentifier
         }
       });

@@ -35,4 +35,18 @@ router.get(
   InstitutionController.listCertificates
 );
 
+router.post(
+  '/enrollments',
+  authenticateToken,
+  requireRoles('INSTITUTION_ADMIN', 'SUPER_ADMIN'),
+  InstitutionController.createEnrollment
+);
+
+router.post(
+  '/key-custody',
+  authenticateToken,
+  requireRoles('INSTITUTION_ADMIN', 'SUPER_ADMIN'),
+  InstitutionController.setupKeyCustody
+);
+
 module.exports = router;
