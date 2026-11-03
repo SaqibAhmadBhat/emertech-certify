@@ -184,7 +184,8 @@ In the final engineering evolution (v2.0 Clean-Room Architecture), the system wa
 
 ### Automated Test Coverage:
 - **14 Smart Contract Unit Tests** (`cleanroom/contracts/test/EmertechCertificateRegistry.test.js`): Testing deployment, institutional accreditation, NIST SHA-256 certificate registration, idempotent zero-hash guards, and institutional/emergency revocation.
-- **25 Backend Integration Tests** (`cleanroom/backend/test/cleanroom.api.test.js`): Executing end-to-end against a real local Hardhat EVM ledger, verifying live mined transactions, NIST Known-Answer Tests, salted student pseudonymization, invalid wallet address rejections, offline blockchain handling, institutional suspensions, and synthetic OCR extraction.
+- **34 Backend Integration Tests** (`cleanroom/backend/test/cleanroom.api.test.js`): Executing end-to-end against a real local Hardhat EVM ledger, verifying live mined transactions, NIST Known-Answer Tests (FIPS 180-4), one-time Super Admin bootstrap invariant, privilege escalation rejection (SUPER_ADMIN and INSTITUTION_ADMIN), least-privilege STUDENT defaults, salted student pseudonymization, invalid wallet address rejections, offline blockchain handling (502 Bad Gateway), institutional suspensions, protected institution admin provisioning, negative RBAC guards, persistent key custody with PBKDF2 derivation and MongoDB AES-256-GCM storage, multi-tenant revocation isolation, file upload magic byte validation, batch issuance, and synthetic OCR extraction.
+- **Total Passing Automated Tests**: **48 / 48 Tests Passing** (0 Failed, 0 Skipped).
 
 ### Operating Modes & Fallback Taxonomy:
 1. **Local EVM Node (Hardhat)**: Executes genuine Ethereum transactions, mines blocks, and generates verified 66-character transaction hashes.

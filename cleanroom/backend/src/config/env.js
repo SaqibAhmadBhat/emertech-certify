@@ -20,7 +20,19 @@ if (!jwtSecret) {
   }
 }
 
-// 2. Private Key Validation: prevent development key on public networks via hash-based deny-list
+// 2. Key Vault Secret Validation: strictly independent from JWT_SECRET
+let keyVaultSecret = process.env.KEY_VAULT_SECRET;
+if (!keyVaultSecret) {
+  if (isTestMode) {
+    keyVaultSecret = crypto.randomBytes(32).toString('hex');
+  } else if (nodeEnv === 'production') {
+    throw new Error('Configuration Error: KEY_VAULT_SECRET environment variable is required in production.');
+  } else {
+    keyVaultSecret = 'emertech_dev_vault_master_key_secret_2026_unrestricted';
+  }
+}
+
+// 3. Private Key Validation: prevent development key on public networks via hash-based deny-list
 const deployerPrivateKey = process.env.DEPLOYER_PRIVATE_KEY ? process.env.DEPLOYER_PRIVATE_KEY.trim() : '';
 // SHA-256 hashes of known development account #0 private key (with and without 0x prefix)
 const KNOWN_DEV_KEY_SHA256 = new Set([
@@ -43,6 +55,7 @@ const config = {
   mongoUri: process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/emertech_certify_cleanroom',
   jwtSecret,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '24h',
+  keyVaultSecret,
   rpcUrl,
   contractAddress: process.env.CONTRACT_ADDRESS ? process.env.CONTRACT_ADDRESS.trim() : '',
   deployerPrivateKey,

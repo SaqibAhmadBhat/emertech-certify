@@ -51,7 +51,7 @@
 | **Authorship & Provenance** | **100% Independently Authored** by Saqib Ahmad Bhat | Upstream Certiport baseline by Alwin James (Remediated) |
 | **Smart Contract** | `EmertechCertificateRegistry.sol` (Solidity ^0.8.20, gas-packed structs, custom errors, $O(1)$ mapping) | `CertificateRegistry.sol` (Solidity ^0.8.19, string lookup with SHA-256 hash patch) |
 | **Contract Unit Tests** | **14 / 14 Passing** (Deployment, Auth, Duplicate, Revocation) | 9 / 9 Passing |
-| **Backend Integration Tests** | **25 / 25 Passing on Live EVM Node** (NIST KAT, institutional signing, on-chain authorization, suspension transitions, 4 verification modes, OCR fixture) | 18 / 18 Passing (Legacy routes & templates) |
+| **Backend Integration Tests** | **34 / 34 Passing on Live EVM Node** (NIST KAT, one-time bootstrap, privilege escalation rejection, least-privilege STUDENT, institutional signing, persistent key custody, multi-tenant isolation, magic byte validation, 4 verification modes, OCR fixture) | 18 / 18 Passing (Legacy routes & templates) |
 | **PDF Generation Engine** | **Pure Vector Memory Compilation** via `pdf-lib` (Zero Chromium overhead) | Headless Chromium via Puppeteer (High RAM overhead) |
 | **Frontend Framework** | **React 19** with custom glassmorphism & original SVG branding | React 18 with legacy dashboard layouts |
 | **Storage & Persistence** | Dual-mode: Content-Addressed Local FS + IPFS Pinata adapter | Local uploads directory + Pinata API |
@@ -64,7 +64,7 @@
 The clean-room v2.0 implementation is completely self-contained within the `cleanroom/` directory.
 
 ### 1. Execute All Automated Tests
-Run the clean-room test suite (14 smart contract tests + 25 backend integration tests executed on a live local EVM node):
+Run the clean-room test suite (14 smart contract tests + 34 backend integration tests executed on a live local EVM node):
 
 ```bash
 # Clone the repository
@@ -97,47 +97,58 @@ npm run test:all
       ✔ Should prevent unauthorized third parties from revoking certificates
       ✔ Should reject revoking an already revoked certificate
 
-  14 passing (819ms)
+  14 passing (780ms)
 ```
 
-#### Terminal Evidence: Backend Integration Tests with Real EVM Consensus (19/19 Passing)
+#### Terminal Evidence: Backend Integration Tests with Real EVM Consensus (34/34 Passing)
 ```
 ================================================================
 🧪 EMERTECH CERTIFY CLEAN-ROOM v2.0 INTEGRATION TEST SUITE
-🏛️ Fictional Academic Fixture: Apex Institute of Technology (AIT)
+🏛️ Academic Fixture: Apex Institute of Technology (AIT)
 🔗 On-Chain Consensus: Real Local Hardhat EVM Execution
 ================================================================
-[Database] Embedded in-memory MongoDB started at mongodb://127.0.0.1:51478/
-[Blockchain Setup] Local Hardhat node started successfully.
-[Blockchain Setup] EmertechCertificateRegistry deployed to: 0x5FbDB2315678afecb367f032d93F642f64180aa3
-[Test Server] Live on ephemeral port 54244
-
 1. Testing System Health Check (/api/v2/health)...            ✅ Health check verified.
 2. Testing SHA-256 NIST Known-Answer Tests & Keccak...       ✅ NIST vectors passed; distinct from Keccak.
-3. Testing Super Administrator Registration & Login...       ✅ Super Admin registered and authenticated.
-4. Testing Academic Institution Application Queue...         ✅ Institution application queued.
-5. Testing Super Admin Approval & On-Chain Status...         ✅ Institution accredited on-chain.
-6. Testing Authorized Institution Admin Login...             ✅ Institution admin authorized.
-7. Testing Student Account Registration...                   ✅ Student registered and linked to AIT.
-8. Testing Certificate Issuance & Real EVM Anchoring...      ✅ Certificate anchored on-chain with mined tx!
-   ID:     AIT-MW10CRJQ-0042
-   Hash:   0xe5682979ea2cb463ed60cc5321cbaeb4dc9e4ce4419745dbddf733ad2afb6e77
-   TxHash: 0x1593c49d31bda4041d4e5ae7cef5c35a61c4bac612956829a316038425beecd4
-9. Testing Vector PDF Download Endpoint...                   ✅ Vector PDF downloaded (5271 bytes).
-10. Testing Mode 1: Public Verification by Hash...           ✅ Mode 1 Verified: AUTHENTIC (onChain: true).
-11. Testing Mode 2: Verification by PDF Upload...            ✅ Mode 2 Verified: Digest matches (onChain: true).
-12. Testing Bitwise Tamper Detection on Altered PDF...       ✅ Tamper Detection Verified: TAMPER_DETECTED flagged.
-13. Testing Mode 3: QR Code Payload Verification...          ✅ Mode 3 Verified: QR resolved on-chain.
-14. Testing Student Credential Retrieval...                  ✅ Transcripts retrieved.
-15. Testing Real On-Chain Certificate Revocation...          ✅ Revocation mined: 0x191910812551d8e80d...
-16. Testing Public Verification of Revoked Credential...     ✅ Revocation confirmed: REVOKED.
-17. Testing Mode 4: Tesseract.js Neural OCR (Synthetic)...   ✅ Mode 4 Verified: Entities extracted from fixture.
-18. Testing Batch Certificate Issuance (Real EVM)...         ✅ Batch issuance processed 2 certs on-chain.
-19. Testing Super Admin Telemetry & Governance...            ✅ Telemetry verified.
+3. Testing One-Time Super Admin Bootstrap via CLI Logic...   ✅ Super Administrator bootstrapped.
+4. Testing Enforcement of One-Time Bootstrap Invariant...    ✅ Multiple bootstraps safely rejected.
+5. Testing Privilege Escalation Rejection (SUPER_ADMIN)...   ✅ Rejected with 403 Forbidden.
+6. Testing Privilege Escalation Rejection (INST_ADMIN)...    ✅ Rejected with 403 Forbidden.
+7. Testing Public Registration Least-Privilege STUDENT...    ✅ Student role defaults enforced.
+8. Testing Academic Institution Application Queue...         ✅ Institution application queued.
+9. Testing Super Admin Approval & On-Chain Status...         ✅ Institution accredited on-chain.
+10. Testing Rejection of Invalid Wallet Authorization...      ✅ Failed authorization rejected (400).
+11. Testing Handling of Unavailable Blockchain (502)...       ✅ Safe 502 Bad Gateway response.
+12. Testing Institution Status Transition to SUSPENDED...     ✅ Institution suspended on-chain (status 3).
+13. Testing Prevention of Issuance by Suspended Inst...       ✅ Blocked with 403 Forbidden.
+14. Testing Restoration of Institution to AUTHORIZED...      ✅ Restored on smart contract.
+15. Testing Protected Institution Admin Provisioning...       ✅ Provisioned by Super Admin.
+16. Testing Prevention of Admin Provisioning by Student...   ✅ Rejected with 403 Forbidden.
+17. Testing Provisioning Guard for Unaccredited Inst...      ✅ Safely rejected with 400 Bad Request.
+18. Testing Negative RBAC: Student Blocked from Issuance...  ✅ Blocked with 403 Forbidden.
+19. Testing Persistent Key Custody (AES-256-GCM / PBKDF2)... ✅ Encrypted DB storage & signer recovery verified.
+20. Testing Certificate Issuance & Real EVM Anchoring...     ✅ Certificate anchored on-chain with mined tx!
+   ID:     AIT-MW12WID1-0042
+   Hash:   0x0c786bbb7d7dc90a476cb67f77b75d49bc5e3d9c18d9ab065b3d7500faadd0e6
+   TxHash: 0xa6386067a966bf3d28cc5fd27914d54e71f118cb54b07e66f1894dfd52065647
+   Issuer: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 (Verified Matches Institution Wallet)
+21. Testing Vector PDF Download Endpoint...                  ✅ Vector PDF downloaded (5228 bytes).
+22. Testing Mode 1: Public Verification by Hash...          ✅ Mode 1 Verified: AUTHENTIC (onChain: true).
+23. Testing Mode 2: Verification by PDF Upload...           ✅ Mode 2 Verified: Digest matches (onChain: true).
+24. Testing Bitwise Tamper Detection on Altered PDF...      ✅ Tamper Detection Verified: TAMPER_DETECTED flagged.
+25. Testing Mode 3: QR Code Payload Verification...         ✅ Mode 3 Verified: QR resolved on-chain.
+26. Testing Student Credential Retrieval...                 ✅ Transcripts retrieved.
+27. Testing Multi-Tenant Revocation Isolation (RBAC)...      ✅ Cross-institution revocation blocked (403).
+28. Testing Real On-Chain Certificate Revocation...         ✅ Revocation mined: 0x96f10f4df838da5ecbc...
+29. Testing Prevention of Unauthorized Revocation...         ✅ Blocked with 403 Forbidden.
+30. Testing Public Verification of Revoked Credential...    ✅ Revocation confirmed: REVOKED.
+31. Testing Mode 4: Tesseract.js Neural OCR (Synthetic)...  ✅ Mode 4 Verified: Entities extracted from fixture.
+32. Testing File Upload Magic Byte Enforcement...           ✅ Invalid headers rejected (400 Bad Request).
+33. Testing Batch Certificate Issuance (Real EVM)...        ✅ Batch issuance processed 2 certs on-chain.
+34. Testing Super Admin Telemetry & Governance...           ✅ Telemetry verified.
 
 ================================================================
 📊 CLEAN-ROOM v2.0 TEST EXECUTION SUMMARY:
-   Passed:  19
+   Passed:  34
    Failed:  0
    Skipped: 0
 ================================================================

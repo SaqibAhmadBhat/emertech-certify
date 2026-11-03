@@ -39,7 +39,7 @@ To verify that **Emertech Certify v2.0** is an independent, clean-room implement
 | **Backend Controllers**| `cleanroom/backend/src/controllers/VerifyController.js` | **100% Independent** | Saqib Ahmad Bhat | 4 verification modes: Hash, PDF file upload, QR code payload, and Neural OCR scan. |
 | **Backend Controllers**| `cleanroom/backend/src/controllers/CertificateController.js` | **100% Independent** | Saqib Ahmad Bhat | PDF streaming and student transcript lookup. |
 | **Backend Controllers**| `cleanroom/backend/src/controllers/AdminController.js` | **100% Independent** | Saqib Ahmad Bhat | Institution accreditation management and system telemetry. |
-| **Backend Tests**| `cleanroom/backend/test/cleanroom.api.test.js` | **100% Independent** | Saqib Ahmad Bhat | 18 comprehensive automated integration tests passing with 100% success. |
+| **Backend Tests**| `cleanroom/backend/test/cleanroom.api.test.js` | **100% Independent** | Saqib Ahmad Bhat | 34 comprehensive automated integration tests passing with 100% success on live EVM ledger (48 total automated tests across contracts and backend). |
 | **Frontend UI** | `cleanroom/frontend/src/components/Logo.js` | **100% Independent** | Saqib Ahmad Bhat | Original vector SVG logo combining a cryptographic hexagon, academic mortarboard, and verification seal. |
 | **Frontend UI** | `cleanroom/frontend/src/components/Navbar.js`, `Footer.js`, `VerificationBadge.js` | **100% Independent** | Saqib Ahmad Bhat | Original navigation, footer, and status badges. |
 | **Frontend Pages**| `cleanroom/frontend/src/pages/LandingPage.js` | **100% Independent** | Saqib Ahmad Bhat | Original landing page with live interactive cryptographic digest simulator. |
@@ -105,7 +105,7 @@ The following standard open-source dependencies are imported via npm and utilize
 
 ## 5. Branch Isolation & Legal Attribution Notice
 
-- **Branch Isolation & Commit Provenance**: The clean-room v2.0 software was engineered on the dedicated `cleanroom-independent` branch to ensure absolute separation from historical commits. After comprehensive automated test validation (14 contract tests, 19 backend integration tests with live EVM consensus, and React 19 production build), it was merged into `main`, keeping both branches synchronized.
+- **Branch Isolation & Commit Provenance**: The clean-room v2.0 software was engineered on the dedicated `cleanroom-independent` branch to ensure absolute separation from historical commits. After comprehensive automated test validation (14 contract tests, 34 backend integration tests with live EVM consensus, and React 19 production build), it was merged into `main`, keeping both branches synchronized.
 - **Attribution & Licensing**:
   - The historical v1 upstream prototype (`/backend`, `/contracts`, `/frontend`) retains the original MIT License granted to Alwin James in root `LICENSE` and `NOTICE.md`.
   - All source files, documentation, and assets within the `cleanroom/` directory are independent original works authored by **Saqib Ahmad Bhat** under its separately scoped [`cleanroom/LICENSE`](../LICENSE).

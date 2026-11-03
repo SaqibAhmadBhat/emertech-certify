@@ -14,6 +14,8 @@ const { connectDatabase, disconnectDatabase } = require('../src/config/db');
 const { reconfigureBlockchain } = require('../src/config/blockchain');
 const CryptoService = require('../src/services/CryptoService');
 const KeyVaultService = require('../src/services/KeyVaultService');
+const { bootstrapSuperAdmin } = require('../scripts/bootstrap-super-admin');
+const Institution = require('../src/models/Institution');
 
 let server;
 let baseUrl = '';
@@ -23,6 +25,7 @@ let studentToken = '';
 let testCertHash = '';
 let testCertId = '';
 let approvedInstId = '';
+let offlineInstId = '';
 let hardhatNodeProcess = null;
 let deployedContractAddress = '';
 let directContractInstance = null;
@@ -189,7 +192,7 @@ async function ensureLocalBlockchainNode() {
 async function runCleanroomTestSuite() {
   console.log('================================================================');
   console.log('🧪 EMERTECH CERTIFY CLEAN-ROOM v2.0 INTEGRATION TEST SUITE');
-  console.log('🏛️ Fictional Academic Fixture: Apex Institute of Technology (AIT)');
+  console.log('🏛️ Academic Fixture: Apex Institute of Technology (AIT)');
   console.log('🔗 On-Chain Consensus: Real Local Hardhat EVM Execution');
   console.log('================================================================');
 
@@ -264,32 +267,131 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 3: Super Admin Registration & Login
+    // TEST 3: One-Time Super Administrator Bootstrap via CLI Logic & Login
     // ------------------------------------------------------------------------
     try {
-      console.log('\n3. Testing Super Administrator Registration & Login...');
-      const adminReg = await makeRequest('POST', '/api/v2/auth/register', {
-        fullName: 'Test Governance Administrator',
+      console.log('\n3. Testing One-Time Super Administrator Bootstrap via CLI Logic...');
+      const bootstrapRes = await bootstrapSuperAdmin({
         email: 'governance.admin@emertech-test.internal',
         password: 'AdminSecurePassword2026!#',
-        role: 'SUPER_ADMIN'
+        fullName: 'Test Governance Administrator'
       });
-      assert.strictEqual(adminReg.statusCode, 201);
-      adminToken = adminReg.body.token;
+      assert.strictEqual(bootstrapRes.success, true);
+      assert.strictEqual(bootstrapRes.user.role, 'SUPER_ADMIN');
+
+      // Authenticate via login
+      const loginRes = await makeRequest('POST', '/api/v2/auth/login', {
+        email: 'governance.admin@emertech-test.internal',
+        password: 'AdminSecurePassword2026!#'
+      });
+      assert.strictEqual(loginRes.statusCode, 200);
+      adminToken = loginRes.body.token;
       assert.ok(adminToken, 'Super Admin JWT must be returned');
+
       passedCount++;
-      console.log('   ✅ Super Admin registered and authenticated.');
+      console.log('   ✅ Super Administrator bootstrapped and authenticated successfully.');
     } catch (err) {
       failedCount++;
-      console.error('   ❌ Super Admin test failed:', err.message);
+      console.error('   ❌ Super Admin bootstrap test failed:', err.message);
       throw err;
     }
 
     // ------------------------------------------------------------------------
-    // TEST 4: Institution Application Queue (Apex Institute of Technology)
+    // TEST 4: Enforcement of One-Time Bootstrap Invariant (Second Bootstrap Fails)
     // ------------------------------------------------------------------------
     try {
-      console.log('\n4. Testing Academic Institution Application Queue...');
+      console.log('\n4. Testing Enforcement of One-Time Bootstrap Invariant...');
+      const secondBootstrap = await bootstrapSuperAdmin({
+        email: 'attacker.admin@internal',
+        password: 'MaliciousPassword123!',
+        fullName: 'Malicious Admin'
+      });
+      assert.strictEqual(secondBootstrap.success, false);
+      assert.strictEqual(secondBootstrap.reason, 'SUPER_ADMIN_ALREADY_EXISTS');
+
+      passedCount++;
+      console.log('   ✅ One-time bootstrap invariant enforced: Multiple bootstrap attempts safely rejected.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ One-time bootstrap invariant test failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 5: Prevention of Privilege Escalation: Public Registration Rejects SUPER_ADMIN
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n5. Testing Prevention of Privilege Escalation: Rejection of SUPER_ADMIN...');
+      const escalateAdmin = await makeRequest('POST', '/api/v2/auth/register', {
+        fullName: 'Attacker Admin',
+        email: 'attacker@evil.org',
+        password: 'AttackerPassword123!',
+        role: 'SUPER_ADMIN'
+      });
+      assert.strictEqual(escalateAdmin.statusCode, 403, 'Attempting to register SUPER_ADMIN must return 403');
+      assert.strictEqual(escalateAdmin.body.success, false);
+      assert.ok(escalateAdmin.body.message.includes('Privilege escalation rejected'));
+
+      passedCount++;
+      console.log('   ✅ Privilege escalation prevented: SUPER_ADMIN self-registration rejected with 403 Forbidden.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ SUPER_ADMIN escalation test failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 6: Prevention of Privilege Escalation: Public Registration Rejects INSTITUTION_ADMIN
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n6. Testing Prevention of Privilege Escalation: Rejection of INSTITUTION_ADMIN...');
+      const escalateInst = await makeRequest('POST', '/api/v2/auth/register', {
+        fullName: 'Attacker Dean',
+        email: 'attacker.dean@evil.org',
+        password: 'AttackerPassword123!',
+        role: 'INSTITUTION_ADMIN'
+      });
+      assert.strictEqual(escalateInst.statusCode, 403, 'Attempting to register INSTITUTION_ADMIN must return 403');
+      assert.strictEqual(escalateInst.body.success, false);
+      assert.ok(escalateInst.body.message.includes('Privilege escalation rejected'));
+
+      passedCount++;
+      console.log('   ✅ Privilege escalation prevented: INSTITUTION_ADMIN self-registration rejected with 403 Forbidden.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ INSTITUTION_ADMIN escalation test failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 7: Public Registration Enforces Least-Privilege STUDENT Role Defaults
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n7. Testing Public Registration Least-Privilege STUDENT Role Defaults...');
+      const studentReg = await makeRequest('POST', '/api/v2/auth/register', {
+        fullName: fictionalStudent.fullName,
+        email: fictionalStudent.email,
+        password: 'StudentPortalPassword2026!',
+        studentIdentifier: fictionalStudent.studentIdentifier
+      });
+      assert.strictEqual(studentReg.statusCode, 201);
+      assert.strictEqual(studentReg.body.user.role, 'STUDENT');
+      studentToken = studentReg.body.token;
+      assert.ok(studentToken, 'Student JWT token must be issued');
+
+      passedCount++;
+      console.log('   ✅ Public registration enforced least-privilege STUDENT account.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ Student registration test failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 8: Academic Institution Application Queue (Apex Institute of Technology)
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n8. Testing Academic Institution Application Queue...');
       const instApp = await makeRequest('POST', '/api/v2/institutions/apply', {
         institutionCode: 'AIT',
         name: 'Apex Institute of Technology',
@@ -308,10 +410,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 5: Super Admin Approves Institution & On-Chain Accreditation
+    // TEST 9: Super Admin Approves Institution & On-Chain Accreditation
     // ------------------------------------------------------------------------
     try {
-      console.log('\n5. Testing Super Admin Approval & On-Chain Accreditation...');
+      console.log('\n9. Testing Super Admin Approval & On-Chain Accreditation...');
       const approveRes = await makeRequest(
         'PATCH',
         `/api/v2/admin/institutions/${approvedInstId}/status`,
@@ -336,11 +438,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 6: Rejection of On-Chain Authorization for Invalid Wallet Address
+    // TEST 10: Rejection of On-Chain Authorization for Invalid Wallet Address
     // ------------------------------------------------------------------------
     try {
-      console.log('\n6. Testing Rejection of On-Chain Authorization for Invalid Wallet Address...');
-      // Apply with invalid wallet address
+      console.log('\n10. Testing Rejection of On-Chain Authorization for Invalid Wallet Address...');
       const invalidApp = await makeRequest('POST', '/api/v2/institutions/apply', {
         institutionCode: 'INV',
         name: 'Invalid Address Academy',
@@ -351,7 +452,6 @@ async function runCleanroomTestSuite() {
       assert.strictEqual(invalidApp.statusCode, 201);
       const invalidInstId = invalidApp.body.institution._id;
 
-      // Attempt authorization
       const failedApprove = await makeRequest(
         'PATCH',
         `/api/v2/admin/institutions/${invalidInstId}/status`,
@@ -370,10 +470,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 7: Resilient Handling of Unavailable Blockchain During Authorization
+    // TEST 11: Resilient Handling of Unavailable Blockchain During Authorization
     // ------------------------------------------------------------------------
     try {
-      console.log('\n7. Testing Handling of Unavailable Blockchain During Authorization...');
+      console.log('\n11. Testing Handling of Unavailable Blockchain During Authorization...');
       const offlineApp = await makeRequest('POST', '/api/v2/institutions/apply', {
         institutionCode: 'OFF',
         name: 'Offline University',
@@ -382,7 +482,7 @@ async function runCleanroomTestSuite() {
         walletAddress: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'
       });
       assert.strictEqual(offlineApp.statusCode, 201);
-      const offlineInstId = offlineApp.body.institution._id;
+      offlineInstId = offlineApp.body.institution._id;
 
       // Temporarily reconfigure to unreachable port
       reconfigureBlockchain({ rpcUrl: 'http://127.0.0.1:9999', contractAddress: deployedContractAddress });
@@ -409,10 +509,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 8: Institution Status Transition to SUSPENDED on Smart Contract
+    // TEST 12: Institution Status Transition to SUSPENDED on Smart Contract
     // ------------------------------------------------------------------------
     try {
-      console.log('\n8. Testing Institution Status Transition to SUSPENDED...');
+      console.log('\n12. Testing Institution Status Transition to SUSPENDED...');
       const suspendRes = await makeRequest(
         'PATCH',
         `/api/v2/admin/institutions/${approvedInstId}/status`,
@@ -435,20 +535,27 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 9: Prevention of Issuance by Suspended/Unauthorized Institution
+    // TEST 13: Prevention of Issuance by Suspended/Unauthorized Institution
     // ------------------------------------------------------------------------
     try {
-      console.log('\n9. Testing Prevention of Issuance by Suspended Institution...');
-      // Temporary token for suspended institution admin
-      const tempInstUser = await makeRequest('POST', '/api/v2/auth/register', {
+      console.log('\n13. Testing Prevention of Issuance by Suspended Institution...');
+      // Direct DB creation of temporary admin user for suspended test
+      const User = require('../src/models/User');
+      const tempHash = await User.hashPassword('SuspendedPassword2026!');
+      const tempUser = await User.create({
         fullName: 'Suspended Dean',
         email: 'suspended.dean@apex.edu.test',
-        password: 'SuspendedPassword2026!',
+        passwordHash: tempHash,
         role: 'INSTITUTION_ADMIN',
         institutionCode: 'AIT',
         walletAddress: institutionWallet
       });
-      const tempToken = tempInstUser.body.token;
+
+      const tempLogin = await makeRequest('POST', '/api/v2/auth/login', {
+        email: 'suspended.dean@apex.edu.test',
+        password: 'SuspendedPassword2026!'
+      });
+      const tempToken = tempLogin.body.token;
 
       const issueAttempt = await makeRequest(
         'POST',
@@ -460,7 +567,7 @@ async function runCleanroomTestSuite() {
       assert.strictEqual(issueAttempt.body.success, false);
 
       passedCount++;
-      console.log('   ✅ Unauthorized issuance blocked: 403 Forbidden enforced.');
+      console.log('   ✅ Unauthorized issuance blocked: 403 Forbidden enforced for suspended status.');
     } catch (err) {
       failedCount++;
       console.error('   ❌ Prevention of unauthorized issuance failed:', err.message);
@@ -468,10 +575,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 10: Restoration of Institution Status to AUTHORIZED on Smart Contract
+    // TEST 14: Restoration of Institution Status to AUTHORIZED on Smart Contract
     // ------------------------------------------------------------------------
     try {
-      console.log('\n10. Testing Restoration of Institution Status to AUTHORIZED...');
+      console.log('\n14. Testing Restoration of Institution Status to AUTHORIZED...');
       const restoreRes = await makeRequest(
         'PATCH',
         `/api/v2/admin/institutions/${approvedInstId}/status`,
@@ -493,56 +600,169 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 11: Authorized Institution Admin Account & Login
+    // TEST 15: Protected Institution Admin Provisioning by Super Admin
     // ------------------------------------------------------------------------
     try {
-      console.log('\n11. Testing Authorized Institution Admin Account & Login...');
-      const instUser = await makeRequest('POST', '/api/v2/auth/register', {
-        fullName: 'Dean of Academic Records',
+      console.log('\n15. Testing Protected Institution Admin Provisioning by Super Admin...');
+      const provRes = await makeRequest(
+        'POST',
+        `/api/v2/admin/institutions/${approvedInstId}/provision-admin`,
+        {
+          fullName: 'Dean of Academic Records',
+          email: 'dean.records@apex.edu.test',
+          password: 'DeanAcademicSecure2026!'
+        },
+        adminToken
+      );
+
+      assert.strictEqual(provRes.statusCode, 201);
+      assert.strictEqual(provRes.body.user.role, 'INSTITUTION_ADMIN');
+      assert.strictEqual(provRes.body.user.institutionCode, 'AIT');
+      assert.strictEqual(provRes.body.user.walletAddress.toLowerCase(), institutionWallet.toLowerCase());
+
+      // Login as the newly provisioned Institution Admin
+      const loginInst = await makeRequest('POST', '/api/v2/auth/login', {
         email: 'dean.records@apex.edu.test',
-        password: 'DeanAcademicSecure2026!',
-        role: 'INSTITUTION_ADMIN',
-        institutionCode: 'AIT',
-        walletAddress: institutionWallet
+        password: 'DeanAcademicSecure2026!'
       });
-      assert.strictEqual(instUser.statusCode, 201);
-      instToken = instUser.body.token;
+      assert.strictEqual(loginInst.statusCode, 200);
+      instToken = loginInst.body.token;
+      assert.ok(instToken, 'Institution Admin token must be issued');
+
       passedCount++;
-      console.log('   ✅ Institution admin authorized.');
+      console.log('   ✅ Institution Administrator provisioned by Super Admin and authenticated.');
     } catch (err) {
       failedCount++;
-      console.error('   ❌ Institution login failed:', err.message);
+      console.error('   ❌ Provision institution admin failed:', err.message);
       throw err;
     }
 
     // ------------------------------------------------------------------------
-    // TEST 12: Student Account Registration & Institution Linkage
+    // TEST 16: Prevention of Institution Admin Provisioning by Non-Super Admin (403 Forbidden)
     // ------------------------------------------------------------------------
     try {
-      console.log('\n12. Testing Student Account Registration & Institution Linkage...');
-      const studentUser = await makeRequest('POST', '/api/v2/auth/register', {
-        fullName: fictionalStudent.fullName,
-        email: fictionalStudent.email,
-        password: 'StudentPortalPassword2026!',
-        role: 'STUDENT',
-        institutionCode: 'AIT',
-        studentIdentifier: fictionalStudent.studentIdentifier
-      });
-      assert.strictEqual(studentUser.statusCode, 201);
-      studentToken = studentUser.body.token;
+      console.log('\n16. Testing Prevention of Institution Admin Provisioning by Non-Super Admin...');
+      const unauthProv = await makeRequest(
+        'POST',
+        `/api/v2/admin/institutions/${approvedInstId}/provision-admin`,
+        {
+          fullName: 'Rogue Admin',
+          email: 'rogue.admin@apex.edu.test',
+          password: 'RoguePassword123!'
+        },
+        studentToken
+      );
+      assert.strictEqual(unauthProv.statusCode, 403, 'Student must be rejected from provisioning administrators');
+
       passedCount++;
-      console.log('   ✅ Student registered and linked to AIT.');
+      console.log('   ✅ Unauthorized admin provisioning rejected with 403 Forbidden.');
     } catch (err) {
       failedCount++;
-      console.error('   ❌ Student registration failed:', err.message);
+      console.error('   ❌ Non-super admin provisioning prevention failed:', err.message);
       throw err;
     }
 
     // ------------------------------------------------------------------------
-    // TEST 13: Real On-Chain Certificate Issuance Signed by Institution Signer
+    // TEST 17: Prevention of Institution Admin Provisioning for Unaccredited Institution (400 Bad Request)
     // ------------------------------------------------------------------------
     try {
-      console.log('\n13. Testing Certificate Issuance Signed by Institution & Real On-Chain Anchoring...');
+      console.log('\n17. Testing Prevention of Provisioning for Unaccredited Institution...');
+      const badProv = await makeRequest(
+        'POST',
+        `/api/v2/admin/institutions/${offlineInstId}/provision-admin`,
+        {
+          fullName: 'Offline Dean',
+          email: 'offline.dean@offline.edu.test',
+          password: 'OfflinePassword123!'
+        },
+        adminToken
+      );
+      assert.strictEqual(badProv.statusCode, 400, 'Unaccredited institution must return 400 Bad Request');
+      assert.ok(badProv.body.message.includes('must be accredited'));
+
+      passedCount++;
+      console.log('   ✅ Provisioning for unaccredited institution safely rejected with 400 Bad Request.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ Unaccredited institution provisioning check failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 18: Negative RBAC: Student Blocked from Certificate Issuance (403 Forbidden)
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n18. Testing Negative RBAC: Student Blocked from Certificate Issuance...');
+      const studentIssue = await makeRequest(
+        'POST',
+        '/api/v2/institutions/issue',
+        fictionalStudent,
+        studentToken
+      );
+      assert.strictEqual(studentIssue.statusCode, 403, 'Student caller must be rejected from issuing certificates');
+
+      passedCount++;
+      console.log('   ✅ Student certificate issuance blocked with 403 Forbidden.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ Student issuance prevention failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 19: Persistent Institutional Key Custody (AES-256-GCM via PBKDF2 & Database Signer)
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n19. Testing Persistent Key Custody (AES-256-GCM via PBKDF2 & Database Signer)...');
+      const testWallet = ethers.Wallet.createRandom();
+
+      const testInstApp = await makeRequest('POST', '/api/v2/institutions/apply', {
+        institutionCode: 'KMS',
+        name: 'Key Custody Academy',
+        officialDomain: 'kms.edu.test',
+        contactEmail: 'security@kms.edu.test',
+        walletAddress: testWallet.address
+      });
+      assert.strictEqual(testInstApp.statusCode, 201);
+
+      // Store encrypted private key into MongoDB
+      const storeRes = await KeyVaultService.storeInstitutionEncryptedKey('KMS', testWallet.privateKey);
+      assert.strictEqual(storeRes.success, true);
+
+      // Verify persistent fields in MongoDB
+      const dbInst = await Institution.findOne({ institutionCode: 'KMS' });
+      assert.ok(dbInst.encryptedPrivateKey, 'Ciphertext must be persisted in DB');
+      assert.ok(dbInst.keyVaultIv, 'IV must be persisted in DB');
+      assert.ok(dbInst.keyVaultTag, 'Auth tag must be persisted in DB');
+      assert.notStrictEqual(dbInst.encryptedPrivateKey, testWallet.privateKey, 'Plaintext key must NEVER be stored');
+
+      // Reset in-memory cache to ensure resolution queries DB directly
+      KeyVaultService.resetVault();
+
+      // Resolve signer from DB
+      const provider = new ethers.providers.JsonRpcProvider(process.env.BLOCKCHAIN_RPC_URL || 'http://127.0.0.1:8545');
+      const resolvedSigner = await KeyVaultService.getSigner(testWallet.address, provider);
+      const resolvedAddr = await resolvedSigner.getAddress();
+      assert.strictEqual(resolvedAddr.toLowerCase(), testWallet.address.toLowerCase());
+
+      // Test cryptographic signature with resolved signer
+      const sig = await resolvedSigner.signMessage('EMERTECH_KEY_VAULT_TEST');
+      const recoveredAddr = ethers.utils.verifyMessage('EMERTECH_KEY_VAULT_TEST', sig);
+      assert.strictEqual(recoveredAddr.toLowerCase(), testWallet.address.toLowerCase());
+
+      passedCount++;
+      console.log('   ✅ Key vault encrypted storage, DB retrieval, and cryptographic signing verified.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ Persistent key custody test failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 20: Real On-Chain Certificate Issuance Signed by Institution Signer
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n20. Testing Certificate Issuance Signed by Institution & Real On-Chain Anchoring...');
       const issueRes = await makeRequest(
         'POST',
         '/api/v2/institutions/issue',
@@ -590,10 +810,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 14: Vector PDF Download Endpoint
+    // TEST 21: Vector PDF Download Endpoint
     // ------------------------------------------------------------------------
     try {
-      console.log('\n14. Testing Vector PDF Download Endpoint...');
+      console.log('\n21. Testing Vector PDF Download Endpoint...');
       const pdfRes = await makeRequest('GET', `/api/v2/certificates/${testCertId}/pdf`);
       assert.strictEqual(pdfRes.statusCode, 200);
       assert.strictEqual(pdfRes.headers['content-type'], 'application/pdf');
@@ -607,10 +827,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 15: Mode 1: Public Verification by Hash with Verified On-Chain Issuer
+    // TEST 22: Mode 1: Public Verification by Hash with Verified On-Chain Issuer
     // ------------------------------------------------------------------------
     try {
-      console.log('\n15. Testing Mode 1: Public Verification by Hash with On-Chain Issuer Display...');
+      console.log('\n22. Testing Mode 1: Public Verification by Hash with On-Chain Issuer Display...');
       const verifyRes = await makeRequest('POST', '/api/v2/verify/hash', { hash: testCertHash });
       assert.strictEqual(verifyRes.statusCode, 200);
       assert.strictEqual(verifyRes.body.status, 'AUTHENTIC');
@@ -627,11 +847,11 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 16: Mode 2: Verification by PDF Binary Upload
+    // TEST 23: Mode 2: Verification by PDF Binary Upload
     // ------------------------------------------------------------------------
     let authenticPdfBuffer = null;
     try {
-      console.log('\n16. Testing Mode 2: Verification by PDF Binary Upload...');
+      console.log('\n23. Testing Mode 2: Verification by PDF Binary Upload...');
       const pdfFetch = await makeRequest('GET', `/api/v2/certificates/${testCertId}/pdf`);
       authenticPdfBuffer = pdfFetch.binary;
 
@@ -657,10 +877,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 17: Bitwise Tamper Detection on Altered PDF Document
+    // TEST 24: Bitwise Tamper Detection on Altered PDF Document
     // ------------------------------------------------------------------------
     try {
-      console.log('\n17. Testing Bitwise Tamper Detection on Altered PDF Document...');
+      console.log('\n24. Testing Bitwise Tamper Detection on Altered PDF Document...');
       const tamperedBuffer = Buffer.from(authenticPdfBuffer);
       tamperedBuffer[tamperedBuffer.length - 20] ^= 0xFF; // Flip bit in trailing byte
 
@@ -689,10 +909,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 18: Mode 3: QR Code Payload Verification
+    // TEST 25: Mode 3: QR Code Payload Verification
     // ------------------------------------------------------------------------
     try {
-      console.log('\n18. Testing Mode 3: QR Code Payload Verification...');
+      console.log('\n25. Testing Mode 3: QR Code Payload Verification...');
       const qrPayload = `http://localhost:3000/verify?hash=${testCertHash}`;
       const qrRes = await makeRequest('POST', '/api/v2/verify/qr', { qrPayload });
       assert.strictEqual(qrRes.statusCode, 200);
@@ -707,10 +927,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 19: Student Credential Retrieval
+    // TEST 26: Student Credential Retrieval (/api/v2/certificates/student/my-certificates)
     // ------------------------------------------------------------------------
     try {
-      console.log('\n19. Testing Student Credential Retrieval (/api/v2/certificates/student/my-certificates)...');
+      console.log('\n26. Testing Student Credential Retrieval (/api/v2/certificates/student/my-certificates)...');
       const studentCerts = await makeRequest('GET', '/api/v2/certificates/student/my-certificates', null, studentToken);
       assert.strictEqual(studentCerts.statusCode, 200);
       assert.strictEqual(studentCerts.body.success, true);
@@ -724,10 +944,74 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 20: Real On-Chain Certificate Revocation by Issuing Institution
+    // TEST 27: Negative RBAC: Institution Admin Forbidden from Revoking Other Institution's Certificate
     // ------------------------------------------------------------------------
     try {
-      console.log('\n20. Testing Real On-Chain Certificate Revocation by Issuing Institution...');
+      console.log('\n27. Testing Negative RBAC: Institution Admin Forbidden from Cross-Institution Revocation...');
+      const otherWallet = '0x90F79bf6EB2c4f870365E785982E1f101E93b906'; // Hardhat Account #3
+      const otherInstApp = await makeRequest('POST', '/api/v2/institutions/apply', {
+        institutionCode: 'OTHER',
+        name: 'Other Technological University',
+        officialDomain: 'other.edu.test',
+        contactEmail: 'admin@other.edu.test',
+        walletAddress: otherWallet
+      });
+      assert.strictEqual(otherInstApp.statusCode, 201);
+      const otherInstId = otherInstApp.body.institution._id;
+
+      // Authorize other institution on-chain
+      const authOther = await makeRequest(
+        'PATCH',
+        `/api/v2/admin/institutions/${otherInstId}/status`,
+        { status: 'AUTHORIZED' },
+        adminToken
+      );
+      assert.strictEqual(authOther.statusCode, 200);
+
+      // Provision admin for other institution
+      const provOther = await makeRequest(
+        'POST',
+        `/api/v2/admin/institutions/${otherInstId}/provision-admin`,
+        {
+          fullName: 'Other Admin',
+          email: 'admin@other.edu.test',
+          password: 'OtherPassword2026!'
+        },
+        adminToken
+      );
+      assert.strictEqual(provOther.statusCode, 201);
+
+      // Login as other admin
+      const otherLogin = await makeRequest('POST', '/api/v2/auth/login', {
+        email: 'admin@other.edu.test',
+        password: 'OtherPassword2026!'
+      });
+      assert.strictEqual(otherLogin.statusCode, 200);
+      const otherToken = otherLogin.body.token;
+
+      // Attempt to revoke AIT's certificate using OTHER admin's token
+      const crossRevoke = await makeRequest(
+        'POST',
+        '/api/v2/institutions/revoke',
+        { certHash: testCertHash, reason: 'Cross-institution attack attempt' },
+        otherToken
+      );
+      assert.strictEqual(crossRevoke.statusCode, 403, 'Cross-institution revocation must return 403 Forbidden');
+      assert.ok(crossRevoke.body.message.includes('own institution'));
+
+      passedCount++;
+      console.log('   ✅ Multi-tenant isolation verified: Cross-institution revocation rejected with 403 Forbidden.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ Cross-institution revocation isolation failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 28: Real On-Chain Certificate Revocation by Issuing Institution
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n28. Testing Real On-Chain Certificate Revocation by Issuing Institution...');
       const revokeRes = await makeRequest(
         'POST',
         '/api/v2/institutions/revoke',
@@ -754,18 +1038,16 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 21: Prevention of Unauthorized Revocation by Non-Issuer
+    // TEST 29: Prevention of Unauthorized Revocation by Non-Issuer / Student
     // ------------------------------------------------------------------------
     try {
-      console.log('\n21. Testing Prevention of Unauthorized Revocation by Non-Issuer...');
-      // Student tries to revoke a certificate
+      console.log('\n29. Testing Prevention of Unauthorized Revocation by Student...');
       const unauthRevoke = await makeRequest(
         'POST',
         '/api/v2/institutions/revoke',
         { certHash: testCertHash, reason: 'Malicious student revocation attempt' },
         studentToken
       );
-      // Student is blocked by role guard (403 Forbidden)
       assert.strictEqual(unauthRevoke.statusCode, 403, 'Non-institution caller must be rejected with 403');
 
       passedCount++;
@@ -777,10 +1059,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 22: Public Verification of Revoked Credential
+    // TEST 30: Public Verification of Revoked Credential
     // ------------------------------------------------------------------------
     try {
-      console.log('\n22. Testing Public Verification of Revoked Credential...');
+      console.log('\n30. Testing Public Verification of Revoked Credential...');
       const revokedVerify = await makeRequest('POST', '/api/v2/verify/hash', { hash: testCertHash });
       assert.strictEqual(revokedVerify.statusCode, 200);
       assert.strictEqual(revokedVerify.body.status, 'REVOKED');
@@ -794,10 +1076,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 23: Mode 4: Tesseract.js Neural OCR Image Extraction with Fixture
+    // TEST 31: Mode 4: Tesseract.js Neural OCR Image Extraction with Fixture
     // ------------------------------------------------------------------------
     try {
-      console.log('\n23. Testing Mode 4: Tesseract.js Neural OCR Image Extraction (Synthetic Fixture)...');
+      console.log('\n31. Testing Mode 4: Tesseract.js Neural OCR Image Extraction (Synthetic Fixture)...');
       const samplePngPath = path.resolve(__dirname, 'fixtures/synthetic-test-certificate.png');
 
       if (!fs.existsSync(samplePngPath)) {
@@ -830,10 +1112,47 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 24: Batch Certificate Issuance with Real On-Chain Registration & Institutional Signatures
+    // TEST 32: File Upload Magic Byte Enforcement (Rejection of Non-PDF & Non-Image)
     // ------------------------------------------------------------------------
     try {
-      console.log('\n24. Testing Batch Certificate Issuance with Real On-Chain Registration...');
+      console.log('\n32. Testing File Upload Magic Byte Enforcement (Rejection of Non-PDF & Non-Image)...');
+      const fakePdfBuffer = Buffer.from('NOT_A_REAL_PDF_DOCUMENT_HEADER_DATA');
+      const badFileRes = await makeRequest(
+        'POST',
+        '/api/v2/verify/file',
+        null,
+        null,
+        true,
+        { certificatePdf: { buffer: fakePdfBuffer, filename: 'fake.pdf', contentType: 'application/pdf' } }
+      );
+      assert.strictEqual(badFileRes.statusCode, 400, 'Non-PDF file must be rejected with 400');
+      assert.ok(badFileRes.body.message.includes('PDF header signature'));
+
+      const fakeImgBuffer = Buffer.from('NOT_AN_IMAGE_HEADER_DATA');
+      const badImgRes = await makeRequest(
+        'POST',
+        '/api/v2/verify/ocr',
+        null,
+        null,
+        true,
+        { imageFile: { buffer: fakeImgBuffer, filename: 'fake.png', contentType: 'image/png' } }
+      );
+      assert.strictEqual(badImgRes.statusCode, 400, 'Non-image file must be rejected with 400');
+      assert.ok(badImgRes.body.message.includes('PNG or JPEG signature'));
+
+      passedCount++;
+      console.log('   ✅ Magic byte validation verified: Invalid binary headers rejected with 400 Bad Request.');
+    } catch (err) {
+      failedCount++;
+      console.error('   ❌ Magic byte validation failed:', err.message);
+      throw err;
+    }
+
+    // ------------------------------------------------------------------------
+    // TEST 33: Batch Certificate Issuance with Real On-Chain Registration & Institutional Signatures
+    // ------------------------------------------------------------------------
+    try {
+      console.log('\n33. Testing Batch Certificate Issuance with Real On-Chain Registration...');
       const batchRes = await makeRequest(
         'POST',
         '/api/v2/institutions/batch',
@@ -860,10 +1179,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 25: Super Admin Telemetry & Governance Metrics
+    // TEST 34: Super Admin Telemetry & Governance Metrics
     // ------------------------------------------------------------------------
     try {
-      console.log('\n25. Testing Super Admin Telemetry & Governance Metrics...');
+      console.log('\n34. Testing Super Admin Telemetry & Governance Metrics...');
       const telemRes = await makeRequest('GET', '/api/v2/admin/telemetry', null, adminToken);
       assert.strictEqual(telemRes.statusCode, 200);
       assert.strictEqual(telemRes.body.success, true);

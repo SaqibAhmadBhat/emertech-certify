@@ -7,6 +7,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
+    "bootstrap:admin": "node scripts/bootstrap-super-admin.js",
     "test": "NODE_ENV=test node test/cleanroom.api.test.js"
   },
   "dependencies": {
