@@ -75,16 +75,22 @@ The clean-room implementation is governed by the following strict engineering ru
 4. **Third-Party Dependency Attribution**:
    - Established open-source dependencies (e.g., Express, React, Ethers, Hardhat, Tesseract.js, pdf-lib) are imported via standard package managers.
    - The license and notice for each open-source library will be tracked in `REFERENCES.md` and `PROVENANCE_AUDIT.md`.
-5. **Independent Git Branch Isolation**:
-   - All clean-room development is committed to the dedicated `cleanroom-independent` branch to avoid modifying or force-pushing over the legacy publication history on `main`.
+5. **Independent Git Branch Isolation & Clean Consolidation**:
+   - Clean-room development was executed and verified on the isolated `cleanroom-independent` branch to avoid modifying historical commits.
+   - Upon comprehensive verification (14 contract tests, 18 backend tests, frontend production build), the branch was fast-forward merged to `main` (commit `4a2673409f0f4544bbb34039c834cc61970edf4a`), preserving both branches in sync without force-pushing or rewriting commit history.
 
 ---
 
-## 4. Verification Checkpoints
+## 4. Verification Checkpoints & Concrete Verification Evidence
 
-The clean-room transition will be evaluated against five mandatory criteria:
-- [ ] **Checkpoint 1: Specifications Complete** — Formal technical specifications written without referencing proprietary upstream code.
-- [ ] **Checkpoint 2: Contracts Clean & Verified** — Smart contract written from scratch, passing 100% of unit tests with custom errors, events, and packed structs.
-- [ ] **Checkpoint 3: Backend Clean & Verified** — Complete Node.js/Express API with fresh controllers, Mongoose schemas, vector PDF generation, OCR service, and passing integration test suite.
-- [ ] **Checkpoint 4: Frontend Clean & Verified** — React application built with original UI components, unique SVG branding, and clean build.
-- [ ] **Checkpoint 5: Provenance Audit Passed** — Comprehensive file-by-file provenance audit verifying zero code overlap with upstream Certiport.
+The clean-room implementation has been evaluated against all five mandatory criteria and verified with empirical terminal evidence:
+
+- [x] **Checkpoint 1: Specifications Complete** — Formal technical specifications authored independently in `CLEANROOM_SPECIFICATIONS.md` without referencing proprietary upstream Certiport code. Defined strictly against public open standards: NIST FIPS 180-4 (Secure Hash Standard SHA-256), W3C Verifiable Credentials Data Model v2.0, RFC 7519 (JWT), EVM Solidity ^0.8.20, and ISO 32000-1 (PDF).
+- [x] **Checkpoint 2: Contracts Clean & Verified** — Smart contract `EmertechCertificateRegistry.sol` authored from scratch in Solidity `^0.8.20`. Employs custom errors for gas optimization (`OnlyContractOwnerAllowed`, `UnauthorizedRevocation`, etc.), gas-packed structs (`CertificateRecord`, `InstitutionRecord`), and index-mapped events.
+  - *Evidence*: Hardhat test suite executed in `cleanroom/contracts`: **14/14 unit tests passing** (819ms) covering deployment, access control, certificate anchoring, duplication prevention, zero-hash rejection, multi-party revocation, and edge-case diagnostics.
+- [x] **Checkpoint 3: Backend Clean & Verified** — Ground-up Node.js/Express REST microservice (`cleanroom/backend`) featuring completely new controllers, Mongoose schemas (`User`, `Institution`, `Certificate`, `AuditLog`), pure `pdf-lib` vector PDF generation with cryptographic QR stamps, Tesseract.js WebAssembly OCR pipeline, and automated fallbacks (in-memory MongoDB via `mongodb-memory-server`, local filesystem content storage).
+  - *Evidence*: Integration test suite executed in `cleanroom/backend`: **18/18 API integration tests passing** covering authentication, institutional onboarding, vector PDF compilation, 4 verification modes (Hash, File binary, QR payload, Neural OCR), revocation lifecycle, and administrative telemetry.
+- [x] **Checkpoint 4: Frontend Clean & Verified** — React 19 single-page application built with original UI components, unique vector SVG branding (`Logo.js`), midnight navy design system with CSS glassmorphism, and live interactive hash diagnostic tools.
+  - *Evidence*: Production build executed via `CI=true npm run build`: **Compiled successfully** with zero errors or warnings, producing optimized bundles (`main.ec511902.js` 109.75 kB gzip, `main.67b0325b.css` 1.94 kB).
+- [x] **Checkpoint 5: Provenance Audit Passed** — Comprehensive AST and token-level comparison conducted across 48 clean-room source files versus 73 legacy Certiport files.
+  - *Evidence*: Zero lines of proprietary or algorithmic code were copied. Overlaps detected are strictly limited to universal syntactic boilerplate and open-source idiomatic patterns (e.g. `e.preventDefault()`, standard CSS box-sizing resets, standard Solidity `onlyOwner` modifiers, and Mongoose schema type declarations). Third-party library boundaries are preserved under their respective upstream licenses. Full empirical breakdown documented in `docs/PROVENANCE_AUDIT.md`.

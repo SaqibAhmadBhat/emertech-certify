@@ -2,13 +2,98 @@ name: Emertech Certify CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, cleanroom-independent ]
   pull_request:
     branches: [ main ]
 
 jobs:
-  contracts:
-    name: Smart Contract Tests (Solidity ^0.8.20)
+  # =========================================================================
+  # PRIMARY JOBS: Clean-Room v2.0 Architecture
+  # =========================================================================
+  cleanroom-contracts:
+    name: Clean-Room Smart Contracts (Solidity ^0.8.20)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: cleanroom/contracts/package-lock.json
+
+      - name: Install Contracts Dependencies
+        run: |
+          cd cleanroom/contracts
+          npm ci
+
+      - name: Compile Clean-Room Smart Contracts
+        run: |
+          cd cleanroom/contracts
+          npx hardhat compile
+
+      - name: Run Clean-Room Hardhat Tests (14/14 Tests)
+        run: |
+          cd cleanroom/contracts
+          npx hardhat test
+
+  cleanroom-backend:
+    name: Clean-Room Backend Integration Tests (Node.js & Express)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: cleanroom/backend/package-lock.json
+
+      - name: Install Backend Dependencies
+        run: |
+          cd cleanroom/backend
+          npm ci
+
+      - name: Run Clean-Room Integration Suite (18/18 Tests)
+        run: |
+          cd cleanroom/backend
+          node test/cleanroom.api.test.js
+
+  cleanroom-frontend:
+    name: Clean-Room Frontend Production Build (React 19)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: cleanroom/frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd cleanroom/frontend
+          npm ci --legacy-peer-deps
+
+      - name: Build Clean-Room React Application
+        env:
+          CI: true
+        run: |
+          cd cleanroom/frontend
+          npm run build
+
+  # =========================================================================
+  # HISTORICAL PROTOTYPE JOBS: v1.0 Audited & Remediated
+  # =========================================================================
+  legacy-contracts:
+    name: Historical v1 Contracts Tests (Solidity ^0.8.19)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -36,8 +121,8 @@ jobs:
           cd contracts
           npm test
 
-  backend:
-    name: Backend API Integration Tests (Node.js & Express)
+  legacy-backend:
+    name: Historical v1 Backend API Tests (Node.js & Express)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -66,8 +151,8 @@ jobs:
           cd backend
           npm test
 
-  frontend:
-    name: Frontend Production Build (React 18 & Tailwind)
+  legacy-frontend:
+    name: Historical v1 Frontend Build (React 18)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository

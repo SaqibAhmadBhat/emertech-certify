@@ -122,7 +122,7 @@ export default function LandingPage() {
           border: '1px solid rgba(16, 185, 129, 0.2)'
         }}>
           <CheckCircle2 size={16} />
-          <span>Mathematical Guarantee: An altered grade or name yields a mismatched hash, preventing digital forgery.</span>
+          <span>Cryptographic Tamper-Evidence: An altered grade or name alters the SHA-256 digest, detecting digital forgery.</span>
         </div>
       </section>
 
@@ -132,9 +132,9 @@ export default function LandingPage() {
           <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#38BDF8', marginBottom: '0.5rem' }}>
             &lt; 500 ms
           </div>
-          <h4 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Instant Verification</h4>
+          <h4 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Local Benchmark Latency</h4>
           <p style={{ fontSize: '0.875rem', color: '#94A3B8' }}>
-            Replaces weeks of manual university registrar emails with sub-second on-chain verification queries.
+            Replaces weeks of manual registrar emails with sub-second local queries (public RPC latency depends on network round-trip time).
           </p>
         </div>
 
@@ -154,7 +154,7 @@ export default function LandingPage() {
           </div>
           <h4 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Privacy by Design</h4>
           <p style={{ fontSize: '0.875rem', color: '#94A3B8' }}>
-            Personal names, marks, and IDs are never stored on the public blockchain, complying with GDPR and DPDP.
+            Personal names, marks, and IDs are never stored on the public blockchain, aligned with GDPR and DPDP data minimization principles.
           </p>
         </div>
       </section>

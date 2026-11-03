@@ -262,7 +262,7 @@ class VerifyController {
           institutionName: matchedCert.institutionName,
           isRevoked: matchedCert.isRevoked
         } : null,
-        disclaimer: 'OCR text extraction is an administrative pre-fill assistant. Cryptographic SHA-256 hash or QR code remains the sole definitive guarantee of authenticity.'
+        disclaimer: 'OCR text extraction is an administrative pre-fill assistant. Cryptographic SHA-256 hash or QR code remains the sole definitive cryptographic proof of document integrity and issuer non-repudiation.'
       });
     } catch (err) {
       next(err);

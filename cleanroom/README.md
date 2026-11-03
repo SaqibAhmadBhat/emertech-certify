@@ -19,20 +19,40 @@ An independent, clean-room decentralized credential verification architecture en
 **Emertech Certify v2.0** is an independent, ground-up software implementation engineered to eliminate academic credential fraud and provide instantaneous, tamper-evident degree verification. Developed under a strict clean-room software engineering protocol, every module, smart contract, API endpoint, vector PDF generator, OCR service, and React component was authored independently without copying code from upstream repositories.
 
 ### Dual-Layer Verification Paradigm
-1. **Off-Chain Privacy Layer**: Student Personally Identifiable Information (PII) is structured into a canonical record, hashed deterministically via SHA-256 (NIST FIPS 180-4), compiled into a high-resolution vector PDF using `pdf-lib` with an embedded cryptographic QR code, and archived in content-addressed storage. Zero personal data is stored on-chain, guaranteeing GDPR and DPDP compliance.
-2. **On-Chain Consensus Layer**: The 256-bit cryptographic digest (`bytes32 certHash`) is anchored immutably to an Ethereum smart contract (`EmertechCertificateRegistry.sol`). Any verifier can authenticate credentials, detect bit-level document alterations, or inspect on-chain revocation states in under 500 milliseconds.
+1. **Off-Chain Privacy Layer**: Student Personally Identifiable Information (PII) is structured into a canonical record, hashed deterministically via SHA-256 (NIST FIPS 180-4), compiled into a high-resolution vector PDF using `pdf-lib` with an embedded cryptographic QR code, and archived in content-addressed storage. Zero sensitive personal data (names, marks, GPAs, birthdates) is stored on-chain, minimizing PII exposure and facilitating alignment with GDPR Article 5(1)(c) and India DPDP Act data minimization principles.
+2. **On-Chain Consensus Layer**: The 256-bit cryptographic digest (`bytes32 certHash`), issuer address, timestamp, revocation flag, and pseudonymized student hash are anchored immutably to an Ethereum smart contract (`EmertechCertificateRegistry.sol`). Any verifier can authenticate credentials, detect bit-level document alterations, or inspect on-chain revocation states (observed local benchmark: < 500ms; public blockchain verification latency depends on RPC provider response times and network congestion).
 
 ---
 
-## 2. Core Architecture & Features
+## 2. Core Architecture & Hybrid Design
+
+Emertech Certify employs a **hybrid architecture** combining decentralized public verification with institutional issuance governance and offline test fallbacks:
 
 ```
 [ Frontend: React 19 SPA ]  ◄──►  [ Backend REST API v2 ]  ◄──►  [ Ethereum Smart Contract ]
   • File Upload (SHA-256)           • CryptoService (Canonical)       • EmertechCertificateRegistry.sol
   • Hash Direct Query               • PdfVectorService (pdf-lib)      • mapping(bytes32 => Record)
   • QR Code Scanner                 • OcrService (Tesseract.js)       • On-Chain Revocation
-  • Scanned Image OCR               • Embedded In-Memory DB           • Custom Gas-Efficient Errors
+  • Scanned Image OCR               • Embedded DB / FS Fallback       • Custom Gas-Efficient Errors
 ```
+
+### On-Chain Data Model (`CertificateRecord`)
+The Ethereum smart contract stores strictly minimal verification metadata:
+- `bytes32 certHash`: 32-byte cryptographic SHA-256 digest of the canonical document payload.
+- `address issuer`: Ethereum wallet address of the accredited issuing university.
+- `uint64 issuedAt`: Block timestamp of credential issuance.
+- `uint64 revokedAt`: Block timestamp of revocation (0 if currently active).
+- `bool isRevoked`: Boolean flag reflecting revocation status.
+- `string recipientIdHash`: Pseudonymized SHA-256 hash of the student registration number.
+- `string metadataURI`: Content-addressed IPFS URI (`ipfs://...`) or local content reference.
+
+> **Zero PII Confirmation**: Student legal names, letter grades, GPAs, and demographic records are strictly excluded from the blockchain ledger.
+
+### Architectural Resiliency & Development Fallbacks
+To enable seamless evaluation in offline or air-gapped environments:
+- **In-Memory MongoDB**: Automatically started via `mongodb-memory-server` if an external MongoDB instance is unreachable.
+- **Local Filesystem Storage**: Automatically persists generated vector PDFs and QR assets to disk (`storage/certificates/`) when third-party IPFS pinning (Pinata) is unconfigured.
+- **Local Fallback Provider**: Retains an in-memory verification ledger when an external Ethereum JSON-RPC node is not connected, ensuring uninterrupted demonstration workflows.
 
 ### Multi-Modal Verification Engine
 1. **Mode 1 (Blockchain Hash Query)**: Look up the 64-character hexadecimal SHA-256 digest on-chain.

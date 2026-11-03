@@ -6,6 +6,7 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
+    "ajv": "^8.20.0",
     "axios": "^1.4.0",
     "lucide-react": "^0.544.0",
     "react": "^19.1.1",
