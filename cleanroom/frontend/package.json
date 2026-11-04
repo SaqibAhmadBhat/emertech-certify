@@ -5,6 +5,7 @@
   "author": "Saqib Ahmad Bhat",
   "license": "MIT",
   "private": true,
+  "homepage": ".",
   "dependencies": {
     "ajv": "^8.20.0",
     "axios": "^1.4.0",

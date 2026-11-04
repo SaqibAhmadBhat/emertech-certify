@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: emertech-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - emertech-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./cleanroom/backend
+      dockerfile: Dockerfile
+    container_name: emertech-backend
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=production
+      - PORT=5001
+      - MONGO_URI=mongodb://mongodb:27017/emertech_certify
+      - JWT_SECRET=production_emertech_jwt_secret_key_change_me_in_prod_12345
+      - KEY_VAULT_SECRET=production_emertech_key_vault_secret_key_change_me_in_prod_12345
+      - CORS_ORIGIN=*
+      - OFFCHAIN_DEMO=true
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - emertech-net
+
+  frontend:
+    build:
+      context: ./cleanroom/frontend
+      dockerfile: Dockerfile
+    container_name: emertech-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - emertech-net
+
+volumes:
+  mongo-data:
+
+networks:
+  emertech-net:
+    driver: bridge

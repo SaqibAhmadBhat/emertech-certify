@@ -39,7 +39,7 @@ export default function App() {
   };
 
   return (
-    <Router>
+    <Router basename={process.env.PUBLIC_URL || ''}>
       <div className="app-layout">
         <Navbar user={user} onLogout={handleLogout} />
         <main className="main-content">
