@@ -2,11 +2,14 @@
 ### AI-Assisted Blockchain-Based Academic Certificate Verification System
 
 [![Emertech Certify Clean-Room CI](https://github.com/SaqibAhmadBhat/emertech-certify/actions/workflows/ci.yml/badge.svg)](https://github.com/SaqibAhmadBhat/emertech-certify/actions/workflows/ci.yml)
+[![GitHub Pages Deployment](https://img.shields.io/badge/GitHub%20Pages-Live%20Demo-2ea44f?logo=github)](https://saqibahmadbhat.github.io/emertech-certify/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Solidity](https://img.shields.io/badge/Solidity-^0.8.20-363636?logo=solidity)](contracts/contracts/EmertechCertificateRegistry.sol)
 [![Hardhat](https://img.shields.io/badge/Hardhat-2.19.4-FFF100?logo=ethereum)](contracts/hardhat.config.js)
 [![React](https://img.shields.io/badge/React-19.1.1-61DAFB?logo=react)](frontend/package.json)
-[![Node](https://img.shields.io/badge/Node->=18.0.0-339933?logo=node.js)](package.json)
+[![Node](https://img.shields.io/badge/Node->=20.0.0-339933?logo=node.js)](package.json)
+
+**Live Web Application**: [**`https://saqibahmadbhat.github.io/emertech-certify/`**](https://saqibahmadbhat.github.io/emertech-certify/) &bull; [**Public Verification Engine**](https://saqibahmadbhat.github.io/emertech-certify/verify) &bull; [**Deployment Guide**](docs/DEPLOYMENT.md)
 
 An independent, clean-room decentralized credential verification architecture engineered from the ground up by **Saqib Ahmad Bhat** (Department of Computer Science and Engineering, **Government College of Engineering, Tirunelveli**).
 

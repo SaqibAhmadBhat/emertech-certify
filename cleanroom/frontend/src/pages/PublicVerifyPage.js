@@ -228,7 +228,7 @@ export default function PublicVerifyPage() {
             <input
               type="text"
               className="form-input"
-              placeholder="http://localhost:3000/verify?hash=0x..."
+              placeholder="https://emertech-certify.vercel.app/verify?hash=0x..."
               value={qrInput}
               onChange={(e) => setQrInput(e.target.value)}
             />
