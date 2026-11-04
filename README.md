@@ -21,20 +21,20 @@
 <br />
 <br />
 
-**A privacy-preserving, enterprise-grade academic verification platform uniting Ethereum smart contracts, deterministic NIST FIPS 180-4 SHA-256 digests, pure vector PDF generation, content-addressed storage, and Tesseract.js WebAssembly OCR.**
+**A privacy-preserving academic verification platform uniting Ethereum smart contracts, deterministic NIST FIPS 180-4 SHA-256 digests, pure vector PDF generation, content-addressed storage, and Tesseract.js WebAssembly OCR.**
 
 ---
 
-### 🌐 Quick Access & Public Deployment Links
+### 🌐 Quick Access & Deployment Status
 
-| Resource | Public Access Link | Operational Status |
+| Resource | Access / Reference | Current Deployment Status |
 | :--- | :--- | :--- |
-| **Live Frontend Application** | [**Open Emertech Certify Web Portal**](https://saqibahmadbhat.github.io/emertech-certify/) | 🟢 **Live on GitHub Pages** |
-| **Public Verification Portal** | [**Open Instant Verification Engine**](https://saqibahmadbhat.github.io/emertech-certify/verify) | 🟢 **Active (4 Verification Modes)** |
-| **Backend REST API Health** | [`https://emertech-certify.onrender.com/api/v2/health`](https://emertech-certify.onrender.com/api/v2/health) | 🟢 **Configured (`render.yaml`)** |
+| **Live Frontend Showcase** | [**Open Emertech Certify Web Portal**](https://saqibahmadbhat.github.io/emertech-certify/) | 🟢 **Live on GitHub Pages (Client SPA)** |
+| **Public Verification UI** | [**Open Verification Portal**](https://saqibahmadbhat.github.io/emertech-certify/verify) | 🟢 **Live UI (Backend API Connection Required for Live Ledger Queries)** |
+| **Backend REST Microservice** | [`cleanroom/backend/src/app.js`](cleanroom/backend/src/app.js) | 🟡 **Configured for Cloud Hosting (`render.yaml`, Docker)**; Tested Locally (37/37 Tests Passing) |
 | **API Specifications** | [`cleanroom/docs/API_DOCUMENTATION.md`](cleanroom/docs/API_DOCUMENTATION.md) | 📘 Complete REST v2 Specs |
-| **Cloud Deployment Guide** | [`DEPLOYMENT.md`](DEPLOYMENT.md) | 🛠️ Multi-Cloud Runbook |
-| **Public Testnet Script** | [`cleanroom/contracts/scripts/deploy-sepolia.js`](cleanroom/contracts/scripts/deploy-sepolia.js) | ⛓️ Ethereum Sepolia Ready |
+| **Cloud Deployment Guide** | [`DEPLOYMENT.md`](DEPLOYMENT.md) | 🛠️ Multi-Cloud Runbook & Action Plan |
+| **Public Testnet Script** | [`cleanroom/contracts/scripts/deploy-sepolia.js`](cleanroom/contracts/scripts/deploy-sepolia.js) | ⛓️ Ethereum Sepolia Script Ready; Tested on Hardhat EVM (14/14 Tests Passing) |
 
 ---
 
@@ -301,6 +301,14 @@ $$\text{certHash} = \text{"0x"} \mathbin{\Vert} \text{SHA256}(\text{CanonicalStr
 
 Any modification of even a single space or character produces an avalanche effect, resulting in an entirely different digest and immediate validation rejection.
 
+### 4. Institutional Key Custody: Authenticated AES-256-GCM & In-Memory Caching
+To enable institutions to sign on-chain transactions with their own wallet identity (`msg.sender == institutionWalletAddress`):
+- **Authenticated Encryption**: Keys are encrypted using AES-256-GCM with a 96-bit random initialization vector (IV) and a 128-bit authentication tag.
+- **Key Derivation**: Vault keys are derived using PBKDF2 with 100,000 iterations of HMAC-SHA256, a dedicated master secret (`KEY_VAULT_SECRET`, min 32 chars), and a high-entropy 256-bit per-record salt.
+- **Identity Binding (AAD)**: The institution's lowercase wallet address is bound into the Authenticated Additional Data (AAD), preventing ciphertext substitution or cross-tenant key splicing.
+- **Persistence & Caching**: Encrypted records are persisted in MongoDB (`Institution` collection) and cached in an encrypted in-memory map (`KeyVaultService._vault`) during process runtime for low-latency transaction signing.
+- **Operational Boundary**: This custody model provides strong protection against database exfiltration, but relies on an application-level master secret. Enterprise production deployment should back this derivation with a dedicated Hardware Security Module (HSM) or cloud Key Management Service (AWS KMS, GCP KMS, or HashiCorp Vault), validated through an independent third-party security audit.
+
 ---
 
 ## 11. Smart Contract & Blockchain Architecture
@@ -314,15 +322,15 @@ The smart contract [`EmertechCertificateRegistry.sol`](file:///Users/saqibahmadb
 
 ---
 
-## 12. Live Deployment & Hosting Architecture
+## 12. Deployment & Hosting Architecture Matrix
 
-| Subsystem | Hosting Platform | Deployed Endpoint | Configuration File |
+| Subsystem | Target Platform | Current Status | Access / Configuration |
 | :--- | :--- | :--- | :--- |
-| **Frontend Application** | **GitHub Pages** | [**`https://saqibahmadbhat.github.io/emertech-certify/`**](https://saqibahmadbhat.github.io/emertech-certify/) | `.github/workflows/ci.yml` |
-| **Backend REST API** | **Render / Cloud VM** | [`https://emertech-certify.onrender.com/api/v2/health`](https://emertech-certify.onrender.com/api/v2/health) | [`render.yaml`](render.yaml) |
-| **Containerized Stack** | **Docker Compose** | `http://localhost:3000` (UI) / `5001` (API) | [`docker-compose.yml`](docker-compose.yml) |
-| **Managed Database** | **MongoDB Atlas** | TLS Replica Set | Connection string via `MONGO_URI` |
-| **Public Blockchain** | **Ethereum Sepolia** | [Sepolia Etherscan Registry](https://sepolia.etherscan.io/) | [`cleanroom/contracts/scripts/deploy-sepolia.js`](cleanroom/contracts/scripts/deploy-sepolia.js) |
+| **Frontend Application** | **GitHub Pages** | 🟢 **Publicly Deployed** | [**`https://saqibahmadbhat.github.io/emertech-certify/`**](https://saqibahmadbhat.github.io/emertech-certify/) |
+| **Backend REST API** | **Render / Docker** | 🟡 **Configured (Not Publicly Deployed)** | Blueprint: [`render.yaml`](render.yaml) • Container: [`cleanroom/backend/Dockerfile`](cleanroom/backend/Dockerfile) |
+| **Local Container Stack**| **Docker Compose**| 🟢 **Locally Ready** | [`docker-compose.yml`](docker-compose.yml) (Runs MongoDB 7.0 + API + Nginx Frontend) |
+| **Managed Database** | **MongoDB Atlas** | 🟡 **Configured (Not Publicly Deployed)** | Connection via `MONGO_URI` with credential redaction in `db.js` |
+| **Public Blockchain** | **Ethereum Sepolia** | 🟡 **Script Ready (Not Deployed to Sepolia)** | Deployment Script: [`deploy-sepolia.js`](cleanroom/contracts/scripts/deploy-sepolia.js) |
 
 ---
 

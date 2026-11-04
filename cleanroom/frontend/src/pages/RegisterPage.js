@@ -31,7 +31,11 @@ export default function RegisterPage({ onLoginSuccess }) {
       onLoginSuccess(user);
       navigate('/student');
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || 'Registration failed.');
+      if (err.response?.status === 404 || err.response?.status === 405 || !err.response) {
+        setErrorMsg(`Backend API offline or unreachable (HTTP ${err.response?.status || 'Network Error'}). A running backend service is required for registration.`);
+      } else {
+        setErrorMsg(err.response?.data?.message || 'Registration failed.');
+      }
     } finally {
       setLoading(false);
     }

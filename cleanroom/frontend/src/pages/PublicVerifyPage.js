@@ -29,6 +29,16 @@ export default function PublicVerifyPage() {
     }
   }, [searchParams]);
 
+  const handleApiError = (err, defaultMessage) => {
+    if (err.response && typeof err.response.data === 'object' && err.response.data !== null && err.response.data.status) {
+      setResult(err.response.data);
+    } else if (err.response?.status === 404 || err.response?.status === 405 || !err.response) {
+      setErrorMsg(`Backend API offline or unreachable (HTTP ${err.response?.status || 'Network Error'}). A running backend microservice is required for on-chain verification.`);
+    } else {
+      setErrorMsg(err.response?.data?.message || defaultMessage);
+    }
+  };
+
   const executeHashVerification = async (hashToVerify) => {
     setLoading(true);
     setErrorMsg('');
@@ -38,11 +48,7 @@ export default function PublicVerifyPage() {
       const res = await axios.post('/api/v2/verify/hash', { hash: hashToVerify });
       setResult(res.data);
     } catch (err) {
-      if (err.response && err.response.data) {
-        setResult(err.response.data);
-      } else {
-        setErrorMsg('Failed to query verification service. Ensure backend is running.');
-      }
+      handleApiError(err, 'Failed to query verification service. Ensure backend is running.');
     } finally {
       setLoading(false);
     }
@@ -68,11 +74,7 @@ export default function PublicVerifyPage() {
       });
       setResult(res.data);
     } catch (err) {
-      if (err.response && err.response.data) {
-        setResult(err.response.data);
-      } else {
-        setErrorMsg('File verification failed.');
-      }
+      handleApiError(err, 'File verification failed.');
     } finally {
       setLoading(false);
     }
@@ -93,11 +95,7 @@ export default function PublicVerifyPage() {
       const res = await axios.post('/api/v2/verify/qr', { qrPayload: qrInput });
       setResult(res.data);
     } catch (err) {
-      if (err.response && err.response.data) {
-        setResult(err.response.data);
-      } else {
-        setErrorMsg('QR verification failed.');
-      }
+      handleApiError(err, 'QR verification failed.');
     } finally {
       setLoading(false);
     }
@@ -123,11 +121,7 @@ export default function PublicVerifyPage() {
       });
       setResult(res.data);
     } catch (err) {
-      if (err.response && err.response.data) {
-        setResult(err.response.data);
-      } else {
-        setErrorMsg('OCR image processing failed.');
-      }
+      handleApiError(err, 'OCR image processing failed.');
     } finally {
       setLoading(false);
     }
@@ -139,9 +133,25 @@ export default function PublicVerifyPage() {
         <h2 style={{ fontSize: '2.4rem', fontWeight: 800, marginBottom: '0.6rem' }}>
           Multi-Modal Verification Hub
         </h2>
-        <p style={{ color: '#94A3B8', fontSize: '1.05rem' }}>
+        <p style={{ color: '#94A3B8', fontSize: '1.05rem', marginBottom: '1rem' }}>
           Instantly verify the cryptographic integrity and Ethereum blockchain status of any academic degree.
         </p>
+
+        {window.location.hostname.includes('github.io') && (
+          <div style={{
+            background: 'rgba(56, 189, 248, 0.08)',
+            border: '1px solid rgba(56, 189, 248, 0.25)',
+            borderRadius: '8px',
+            padding: '0.75rem 1rem',
+            maxWidth: '680px',
+            margin: '0 auto',
+            fontSize: '0.85rem',
+            color: '#CBD5E1',
+            textAlign: 'left'
+          }}>
+            <strong style={{ color: '#38BDF8' }}>ℹ️ Public Frontend Showcase:</strong> This page runs as a static demonstration on GitHub Pages. Querying live blockchain state requires a running backend API microservice and EVM node (verified locally across 37 integration tests).
+          </div>
+        )}
       </div>
 
       {/* Tabs Navigation */}

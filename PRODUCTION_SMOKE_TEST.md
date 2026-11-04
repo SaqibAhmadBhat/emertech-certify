@@ -10,23 +10,26 @@
 
 ## 1. Automated Smoke-Test Summary Matrix
 
-| # | Verification Area | Target Endpoint / Mechanism | Test Condition | Observed Result | Status |
-| :- | :--- | :--- | :--- | :--- | :--- |
-| **1** | **HTTPS Delivery** | `https://saqibahmadbhat.github.io/emertech-certify/` | TLS 1.3 handshake on edge CDN | HTTP 200 OK, SSL verified | **PASSED** |
-| **2** | **SPA Client Routing** | `/verify`, `/student`, `/institution`, `/admin` | Direct URL navigation & page refresh | Rendered without 404 via `404.html` | **PASSED** |
-| **3** | **API Health Probe** | `GET /api/v2/health` | System status & database connectivity | `{"status":"ONLINE","database":"CONNECTED"}` | **PASSED** |
-| **4** | **Readiness Probe** | `GET /api/v2/health/ready` | Container cluster readiness | HTTP 200 `{"ready":true,"status":"READY"}` | **PASSED** |
-| **5** | **Security Headers** | All HTTP responses | Header injection inspection | `nosniff`, `DENY`, `HSTS`, `CSP` confirmed | **PASSED** |
-| **6** | **Rate Limiting** | `POST /api/v2/auth/login` | Rapid multi-request burst | HTTP 429 Too Many Requests on threshold | **PASSED** |
-| **7** | **Mode 1: Hash Verify** | `POST /api/v2/verify/hash` | 64-character authentic SHA-256 hash | HTTP 200 `{"status":"AUTHENTIC","onChain":true}` | **PASSED** |
-| **8** | **Mode 2: PDF Upload** | `POST /api/v2/verify/file` | Multipart binary stream upload | Stream SHA-256 matches EVM record | **PASSED** |
-| **9** | **Mode 3: QR Verify** | `POST /api/v2/verify/qr` | URL payload `?hash=0x...` | Payload decoded and anchored on-chain | **PASSED** |
-| **10**| **Mode 4: OCR Scan** | `POST /api/v2/verify/ocr` | Synthetic certificate image scan | Tesseract.js WASM extracts student ID | **PASSED** |
-| **11**| **Tamper Detection** | `POST /api/v2/verify/hash` | 1-bit altered digest (`...197`) | HTTP 404 `TAMPER_DETECTED / UNREGISTERED` | **PASSED** |
-| **12**| **Vector PDF Engine** | `GET /api/v2/certificates/:id/pdf` | `pdf-lib` direct vector compilation | Vector PDF streamed with dynamic QR | **PASSED** |
-| **13**| **Secure Bootstrap** | `bootstrap-super-admin.js` | Genesis Super Admin initialization | Terminal raw mode, zero echo, safe exit | **PASSED** |
-| **14**| **Enrollment Claim** | `POST /api/v2/auth/claim-identity` | Hashed token + email match + race test | 403 on wrong email, 409 on race | **PASSED** |
-| **15**| **RPC Downtime Resiliency**| Blockchain offline simulation | Status transition under unreachable RPC | HTTP 502, MongoDB state preserved | **PASSED** |
+| # | Verification Area | Target Endpoint / Mechanism | Test Environment | Test Condition | Observed Result | Status |
+| :- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1** | **HTTPS Delivery** | `https://saqibahmadbhat.github.io/emertech-certify/` | **Live GitHub Pages** | TLS 1.3 handshake on edge CDN | HTTP 200 OK, SSL verified | **PASSED** |
+| **2** | **SPA Client Routing** | `/verify`, `/student`, `/institution`, `/admin` | **Live GitHub Pages** | Direct URL navigation & page refresh | Rendered without 404 via `404.html` | **PASSED** |
+| **3** | **API Health Probe** | `GET /api/v2/health` | **Local / CI Node.js** | System status & database connectivity | `{"status":"ONLINE","database":"CONNECTED"}` | **PASSED** |
+| **4** | **Readiness Probe** | `GET /api/v2/health/ready` | **Local / CI Node.js** | Container cluster readiness | HTTP 200 `{"ready":true,"status":"READY"}` | **PASSED** |
+| **5** | **Security Headers** | All HTTP responses | **Local / CI Node.js** | Header injection inspection | `nosniff`, `DENY`, `HSTS`, `CSP` confirmed | **PASSED** |
+| **6** | **Rate Limiting** | `POST /api/v2/auth/login` | **Local / CI Node.js** | Rapid multi-request burst | HTTP 429 Too Many Requests on threshold | **PASSED** |
+| **7** | **Mode 1: Hash Verify** | `POST /api/v2/verify/hash` | **Local Hardhat EVM** | 64-character authentic SHA-256 hash | HTTP 200 `{"status":"AUTHENTIC","onChain":true}` | **PASSED** |
+| **8** | **Mode 2: PDF Upload** | `POST /api/v2/verify/file` | **Local Hardhat EVM** | Multipart binary stream upload | Stream SHA-256 matches EVM record | **PASSED** |
+| **9** | **Mode 3: QR Verify** | `POST /api/v2/verify/qr` | **Local Hardhat EVM** | URL payload `?hash=0x...` | Payload decoded and anchored on-chain | **PASSED** |
+| **10**| **Mode 4: OCR Scan** | `POST /api/v2/verify/ocr` | **Local Test Runner** | Synthetic certificate image scan | Tesseract.js WASM extracts student ID | **PASSED** |
+| **11**| **Tamper Detection** | `POST /api/v2/verify/hash` | **Local Hardhat EVM** | 1-bit altered digest (`...197`) | HTTP 404 `TAMPER_DETECTED / UNREGISTERED` | **PASSED** |
+| **12**| **Vector PDF Engine** | `GET /api/v2/certificates/:id/pdf` | **Local Test Runner** | `pdf-lib` direct vector compilation | Vector PDF streamed with dynamic QR | **PASSED** |
+| **13**| **Secure Bootstrap** | `bootstrap-super-admin.js` | **Local TTY Shell** | Genesis Super Admin initialization | Terminal raw mode, zero echo, safe exit | **PASSED** |
+| **14**| **Enrollment Claim** | `POST /api/v2/auth/claim-identity` | **Local DB / Server** | Hashed token + email match + race test | 403 on wrong email, 409 on race | **PASSED** |
+| **15**| **RPC Downtime Resiliency**| Blockchain offline simulation | **Local Simulated RPC** | Status transition under unreachable RPC | HTTP 502, MongoDB state preserved | **PASSED** |
+
+> [!NOTE]
+> Tests 1–2 verify the live edge CDN deployment on GitHub Pages. Tests 3–15 were executed against the cleanroom backend and smart contracts running in the local integration testing environment (Node.js 20, Hardhat local EVM node at `0x5FbDB2...`, and embedded MongoDB) and through GitHub Actions CI runners. A public backend microservice must be deployed to execute tests 3–15 in a public cloud environment.
 
 ---
 
