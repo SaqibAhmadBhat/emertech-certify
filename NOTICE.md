@@ -69,6 +69,6 @@ The `cleanroom/` directory contains an independently engineered, clean-room reim
 - Fully decoupled from upstream legacy files.
 - Governed by its own separately scoped license (`cleanroom/LICENSE`).
 - Verified via reproducible provenance scanning (`cleanroom/tools/provenance_scan.py`).
-- All tests execute against real EVM consensus without simulated transaction fallbacks.
+- All tests execute against local Hardhat EVM integration testing without simulated transaction fallbacks.
 
 

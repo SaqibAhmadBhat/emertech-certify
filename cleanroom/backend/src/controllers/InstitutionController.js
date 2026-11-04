@@ -462,14 +462,15 @@ class InstitutionController {
         });
       }
 
-      const enrollmentToken = 'ENR-' + crypto.randomBytes(16).toString('hex').toUpperCase();
+      const rawEnrollmentToken = 'ENR-' + crypto.randomBytes(16).toString('hex').toUpperCase();
+      const enrollmentTokenHash = StudentEnrollment.hashToken(rawEnrollmentToken);
 
       const enrollment = await StudentEnrollment.create({
         institutionCode: instCode,
         studentIdentifier: cleanIdentifier,
         studentName: studentName.trim(),
         studentEmail: cleanEmail,
-        enrollmentToken
+        enrollmentTokenHash
       });
 
       await AuditLog.create({
@@ -495,7 +496,7 @@ class InstitutionController {
           studentIdentifier: enrollment.studentIdentifier,
           studentName: enrollment.studentName,
           studentEmail: enrollment.studentEmail,
-          enrollmentToken: enrollment.enrollmentToken
+          enrollmentToken: rawEnrollmentToken
         }
       });
     } catch (err) {

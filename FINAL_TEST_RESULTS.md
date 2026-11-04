@@ -19,7 +19,7 @@
   Category                              Target      Passed    Failed   Skipped
   ──────────────────────────────────────────────────────────────────────────────
   Smart Contract Unit Tests (Hardhat)       14          14         0         0
-  Backend Integration Tests (Live EVM)      37          37         0         0
+  Backend Integration Tests (Local EVM)     37          37         0         0
   Frontend Production Build (React 19)       1           1         0         0
   ──────────────────────────────────────────────────────────────────────────────
   TOTAL AUTOMATED VALIDATION SUITE          52          52         0         0
@@ -64,7 +64,7 @@ cd cleanroom/contracts && npx hardhat test
 
 ---
 
-## 3. Backend Integration Suite with Live EVM Consensus (37/37 Passing)
+## 3. Backend Integration Suite with Local Hardhat EVM Integration Testing (37/37 Passing)
 
 Executed in `cleanroom/backend` against an active, live local Hardhat EVM node with real mined transactions, real cryptographic checks, and full multi-tenant isolation:
 
@@ -123,8 +123,8 @@ cd cleanroom/backend && npm test
 11. Testing Handling of Unavailable Blockchain During Authorization...
    ✅ Blockchain unavailability handled safely; institution remains unapproved on-chain.
 
-12. Testing Institution Status Transition to SUSPENDED & Failure Invariant...
-   ✅ Institution successfully suspended on-chain (status = 3) and off-chain.
+12. Testing Institution Status Suspension, Revocation & Failure Resiliency...
+   ✅ Institution revocation and suspension resiliency verified (502 failure guard, on-chain status 4 Revoked & status 3 Suspended).
 
 13. Testing Prevention of Issuance by Suspended Institution...
    ✅ Unauthorized issuance blocked: 403 Forbidden enforced for suspended status.
@@ -145,7 +145,7 @@ cd cleanroom/backend && npm test
    ✅ Student certificate issuance blocked with 403 Forbidden.
 
 18B. Testing Student Enrollment Token Generation & Identity Claiming...
-   ✅ Student enrollment token generation, cryptographic claim, and access authorization verified.
+   ✅ Student enrollment token generation, cryptographic claim, email verification, atomic concurrency guard, and access authorization verified.
 
 19. Testing Persistent Key Custody (AES-256-GCM via PBKDF2 & Database Signer)...
    ✅ Key vault encrypted storage, DB retrieval, and cryptographic signing verified.

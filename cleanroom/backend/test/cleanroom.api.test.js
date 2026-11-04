@@ -625,13 +625,15 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 12: Institution Status Transition to SUSPENDED on Smart Contract & Resilient Failure Handling
+    // TEST 12: Institution Status Suspension & Revocation Lifecycle & Resilient Failure Handling
     // ------------------------------------------------------------------------
     try {
-      console.log('\n12. Testing Institution Status Transition to SUSPENDED & Failure Invariant...');
+      console.log('\n12. Testing Institution Status Suspension, Revocation & Failure Resiliency...');
+
+      const activeRpc = process.env.BLOCKCHAIN_RPC_URL || 'http://127.0.0.1:8545';
+      const AuditLog = require('../src/models/AuditLog');
 
       // 12a. Suspension failure handling: preserve DB state when blockchain is down
-      const activeRpc = process.env.BLOCKCHAIN_RPC_URL || 'http://127.0.0.1:8545';
       reconfigureBlockchain({ rpcUrl: 'http://127.0.0.1:9999', contractAddress: deployedContractAddress });
 
       const failSuspend = await makeRequest(
@@ -640,22 +642,55 @@ async function runCleanroomTestSuite() {
         { status: 'SUSPENDED' },
         adminToken
       );
-      assert.strictEqual(failSuspend.statusCode, 502, 'Unreachable blockchain must return 502 Bad Gateway');
+      assert.strictEqual(failSuspend.statusCode, 502, 'Unreachable blockchain must return 502 Bad Gateway on suspension attempt');
       assert.strictEqual(failSuspend.body.onChain, false);
 
       // Verify MongoDB state is NOT corrupted: institution remains AUTHORIZED
-      const checkDbInst = await Institution.findById(approvedInstId);
-      assert.strictEqual(checkDbInst.status, 'AUTHORIZED', 'MongoDB status must NOT be modified when blockchain call fails');
+      let checkDbInst = await Institution.findById(approvedInstId);
+      assert.strictEqual(checkDbInst.status, 'AUTHORIZED', 'MongoDB status must NOT be modified when suspension call fails');
 
-      // Verify failure logged to AuditLog
-      const AuditLog = require('../src/models/AuditLog');
-      const failLog = await AuditLog.findOne({ eventType: 'INSTITUTION_SUSPENSION_FAILED' }).sort({ createdAt: -1 });
-      assert.ok(failLog, 'AuditLog must record INSTITUTION_SUSPENSION_FAILED');
+      const failSuspLog = await AuditLog.findOne({ eventType: 'INSTITUTION_SUSPENSION_FAILED' }).sort({ createdAt: -1 });
+      assert.ok(failSuspLog, 'AuditLog must record INSTITUTION_SUSPENSION_FAILED');
 
-      // Restore blockchain connection
+      // 12b. Revocation failure handling: preserve DB state when blockchain is down
+      const failRevoke = await makeRequest(
+        'PATCH',
+        `/api/v2/admin/institutions/${approvedInstId}/status`,
+        { status: 'REVOKED' },
+        adminToken
+      );
+      assert.strictEqual(failRevoke.statusCode, 502, 'Unreachable blockchain must return 502 Bad Gateway on revocation attempt');
+      assert.strictEqual(failRevoke.body.onChain, false);
+
+      // Verify MongoDB state is still preserved: institution remains AUTHORIZED
+      checkDbInst = await Institution.findById(approvedInstId);
+      assert.strictEqual(checkDbInst.status, 'AUTHORIZED', 'MongoDB status must NOT be modified when revocation call fails');
+
+      const failRevLog = await AuditLog.findOne({ eventType: 'INSTITUTION_REVOCATION_FAILED' }).sort({ createdAt: -1 });
+      assert.ok(failRevLog, 'AuditLog must record INSTITUTION_REVOCATION_FAILED');
+
+      // Restore active blockchain connection
       reconfigureBlockchain({ rpcUrl: activeRpc, contractAddress: deployedContractAddress });
 
-      // 12b. Normal successful suspension with active blockchain
+      // 12c. Successful institutional revocation path with active blockchain
+      const revokeRes = await makeRequest(
+        'PATCH',
+        `/api/v2/admin/institutions/${approvedInstId}/status`,
+        { status: 'REVOKED' },
+        adminToken
+      );
+      assert.strictEqual(revokeRes.statusCode, 200, 'Successful revocation must return 200 OK');
+      assert.strictEqual(revokeRes.body.institution.status, 'REVOKED');
+      assert.strictEqual(revokeRes.body.onChain, true);
+
+      // Verify on-chain status is now 4 (Revoked)
+      let instOnChain = await directContractInstance.getInstitution(institutionWallet);
+      assert.strictEqual(instOnChain.status, 4, 'Smart contract must record status 4 (Revoked)');
+
+      const revSuccessLog = await AuditLog.findOne({ eventType: 'INSTITUTION_REVOKED' }).sort({ createdAt: -1 });
+      assert.ok(revSuccessLog, 'AuditLog must record INSTITUTION_REVOKED');
+
+      // 12d. Transition to SUSPENDED for downstream issuance prevention test (TEST 13)
       const suspendRes = await makeRequest(
         'PATCH',
         `/api/v2/admin/institutions/${approvedInstId}/status`,
@@ -666,14 +701,14 @@ async function runCleanroomTestSuite() {
       assert.strictEqual(suspendRes.body.institution.status, 'SUSPENDED');
 
       // Verify on-chain status is now 3 (Suspended)
-      const instOnChain = await directContractInstance.getInstitution(institutionWallet);
+      instOnChain = await directContractInstance.getInstitution(institutionWallet);
       assert.strictEqual(instOnChain.status, 3, 'Smart contract must record status 3 (Suspended)');
 
       passedCount++;
-      console.log('   ✅ Institution successfully suspended on-chain (status = 3) and off-chain.');
+      console.log('   ✅ Institution revocation and suspension resiliency verified (502 failure guard, on-chain status 4 Revoked & status 3 Suspended).');
     } catch (err) {
       failedCount++;
-      console.error('   ❌ Suspension test failed:', err.message);
+      console.error('   ❌ Suspension/revocation test failed:', err.message);
       throw err;
     }
 
@@ -887,7 +922,14 @@ async function runCleanroomTestSuite() {
       const enrollmentToken = enrollRes.body.enrollment.enrollmentToken;
       assert.ok(enrollmentToken && enrollmentToken.startsWith('ENR-'));
 
-      // 18B.3: Duplicate enrollment generation rejected with 409 Conflict
+      // 18B.3: Cryptographic storage verification: only token hash stored in MongoDB, not plaintext
+      const StudentEnrollment = require('../src/models/StudentEnrollment');
+      const dbEnrollment = await StudentEnrollment.findById(enrollRes.body.enrollment.id);
+      assert.strictEqual(dbEnrollment.enrollmentToken, undefined, 'Plaintext enrollment token must NOT be stored in MongoDB');
+      assert.ok(dbEnrollment.enrollmentTokenHash, 'Secure SHA-256 enrollmentTokenHash must be stored');
+      assert.strictEqual(dbEnrollment.enrollmentTokenHash, StudentEnrollment.hashToken(enrollmentToken));
+
+      // 18B.4: Duplicate enrollment generation rejected with 409 Conflict
       const dupEnroll = await makeRequest(
         'POST',
         '/api/v2/institutions/enrollments',
@@ -900,7 +942,7 @@ async function runCleanroomTestSuite() {
       );
       assert.strictEqual(dupEnroll.statusCode, 409, 'Duplicate student enrollment must return 409 Conflict');
 
-      // 18B.4: Student claims with invalid token rejected with 404
+      // 18B.5: Student claims with invalid token rejected with 404
       const badClaim = await makeRequest(
         'POST',
         '/api/v2/auth/claim-identity',
@@ -912,7 +954,7 @@ async function runCleanroomTestSuite() {
       );
       assert.strictEqual(badClaim.statusCode, 404, 'Invalid token must return 404 Not Found');
 
-      // 18B.5: Student claims with mismatched ID rejected with 404
+      // 18B.6: Student claims with mismatched ID rejected with 404
       const badClaimId = await makeRequest(
         'POST',
         '/api/v2/auth/claim-identity',
@@ -924,24 +966,43 @@ async function runCleanroomTestSuite() {
       );
       assert.strictEqual(badClaimId.statusCode, 404, 'Mismatched student identifier must return 404 Not Found');
 
-      // 18B.6: Successful claim binds student identity and returns refreshed JWT
-      const goodClaim = await makeRequest(
+      // 18B.7: Student claims with mismatched account email rejected with 403 Forbidden
+      const imposterReg = await makeRequest('POST', '/api/v2/auth/register', {
+        fullName: 'Imposter Student',
+        email: 'imposter.student@apex.edu.test',
+        password: 'ImposterPassword2026!'
+      });
+      assert.strictEqual(imposterReg.statusCode, 201);
+      const imposterToken = imposterReg.body.token;
+
+      const wrongEmailClaim = await makeRequest(
         'POST',
         '/api/v2/auth/claim-identity',
         {
           enrollmentToken,
           studentIdentifier: fictionalStudent.studentIdentifier
         },
-        studentToken
+        imposterToken
       );
-      assert.strictEqual(goodClaim.statusCode, 200);
-      assert.strictEqual(goodClaim.body.success, true);
-      assert.strictEqual(goodClaim.body.user.studentIdentifier, fictionalStudent.studentIdentifier);
-      assert.strictEqual(goodClaim.body.user.institutionCode, 'AIT');
-      studentToken = goodClaim.body.token; // Update studentToken to refreshed JWT with verified identity
+      assert.strictEqual(wrongEmailClaim.statusCode, 403, 'Claim attempt with non-matching email must return 403 Forbidden');
+      assert.strictEqual(wrongEmailClaim.body.success, false);
+
+      // 18B.8: Atomic conditional claiming under concurrency: exactly one succeeds (200), other gets 409 Conflict
+      const [claimResA, claimResB] = await Promise.all([
+        makeRequest('POST', '/api/v2/auth/claim-identity', { enrollmentToken, studentIdentifier: fictionalStudent.studentIdentifier }, studentToken),
+        makeRequest('POST', '/api/v2/auth/claim-identity', { enrollmentToken, studentIdentifier: fictionalStudent.studentIdentifier }, studentToken)
+      ]);
+      const claimStatusCodes = [claimResA.statusCode, claimResB.statusCode].sort();
+      assert.deepStrictEqual(claimStatusCodes, [200, 409], 'Atomic claim guard must resolve exactly one 200 OK and one 409 Conflict');
+
+      const winningClaim = claimResA.statusCode === 200 ? claimResA : claimResB;
+      assert.strictEqual(winningClaim.body.success, true);
+      assert.strictEqual(winningClaim.body.user.studentIdentifier, fictionalStudent.studentIdentifier);
+      assert.strictEqual(winningClaim.body.user.institutionCode, 'AIT');
+      studentToken = winningClaim.body.token; // Update studentToken to refreshed JWT with verified identity
       assert.ok(studentToken);
 
-      // 18B.7: Second claim attempt of same token rejected with 409 Conflict
+      // 18B.9: Subsequent claim attempt of already claimed token rejected with 409 Conflict
       const reClaim = await makeRequest(
         'POST',
         '/api/v2/auth/claim-identity',
@@ -953,13 +1014,13 @@ async function runCleanroomTestSuite() {
       );
       assert.strictEqual(reClaim.statusCode, 409, 'Already claimed token must return 409 Conflict');
 
-      // 18B.8: Verified student can now access student portal endpoint
+      // 18B.10: Verified student can now access student portal endpoint
       const verifiedAccess = await makeRequest('GET', '/api/v2/certificates/student/my-certificates', null, studentToken);
       assert.strictEqual(verifiedAccess.statusCode, 200, 'Verified student can access transcripts');
       assert.strictEqual(verifiedAccess.body.count, 0, 'No certificates issued yet');
 
       passedCount++;
-      console.log('   ✅ Student enrollment token generation, cryptographic claim, and access authorization verified.');
+      console.log('   ✅ Student enrollment token generation, cryptographic claim, email verification, atomic concurrency guard, and access authorization verified.');
     } catch (err) {
       failedCount++;
       console.error('   ❌ Student enrollment verification failed:', err.message);
@@ -1493,10 +1554,10 @@ async function runCleanroomTestSuite() {
     }
 
     // ------------------------------------------------------------------------
-    // TEST 31: Mode 4: Tesseract.js Neural OCR Image Extraction with Fixture
+    // TEST 31: Mode 4: Tesseract.js WebAssembly OCR Image Extraction with Fixture
     // ------------------------------------------------------------------------
     try {
-      console.log('\n31. Testing Mode 4: Tesseract.js Neural OCR Image Extraction (Synthetic Fixture)...');
+      console.log('\n31. Testing Mode 4: Tesseract.js WebAssembly OCR Image Extraction (Synthetic Fixture)...');
       const samplePngPath = path.resolve(__dirname, 'fixtures/synthetic-test-certificate.png');
 
       if (!fs.existsSync(samplePngPath)) {

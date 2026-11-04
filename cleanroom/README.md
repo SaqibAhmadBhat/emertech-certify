@@ -56,7 +56,7 @@ To enable seamless evaluation in offline or air-gapped environments:
 1. **Mode 1 (Blockchain Hash Query)**: Look up the 64-character hexadecimal SHA-256 digest on-chain.
 2. **Mode 2 (PDF Binary Upload)**: Upload the certificate PDF. The system computes its SHA-256 hash in real time; if even a single character was altered, an immediate `TAMPER_DETECTED` warning is displayed.
 3. **Mode 3 (QR Code Scanning)**: Decode the embedded QR verification payload.
-4. **Mode 4 (AI Neural OCR)**: Extract text and metadata from physical paper scans via Tesseract.js WebAssembly.
+4. **Mode 4 (Tesseract.js WebAssembly OCR)**: Extract text and metadata from physical paper scans via Tesseract.js WebAssembly.
 
 ---
 
@@ -66,11 +66,11 @@ To enable seamless evaluation in offline or air-gapped environments:
 # 1. Enter cleanroom directory
 cd cleanroom
 
-# 2. Run the complete test suite (14 contract tests + 37 backend integration tests on live EVM ledger)
+# 2. Run the complete test suite (14 contract tests + 37 backend integration tests on local Hardhat EVM integration testing)
 npm run test:all
 ```
 
-### Verified Terminal Evidence (Live Local EVM Consensus):
+### Verified Terminal Evidence (Local Hardhat EVM Integration Testing):
 ```
   EmertechCertificateRegistry (Clean-Room Architecture)
     1. Deployment & Administrative Authority
@@ -111,14 +111,14 @@ npm run test:all
 9. Testing Super Admin Approval & On-Chain Status...         ✅ Verified.
 10. Testing Rejection of Invalid Wallet Authorization...      ✅ Verified.
 11. Testing Handling of Unavailable Blockchain (502)...       ✅ Verified.
-12. Testing Institution Status Transition to SUSPENDED...     ✅ Verified (Failure Invariant Verified).
+12. Testing Institution Status Suspension, Revocation & Resiliency... ✅ Verified (502 Failure Guard, Revocation & Suspension).
 13. Testing Prevention of Issuance by Suspended Inst...       ✅ Verified (403 Forbidden).
 14. Testing Restoration of Institution to AUTHORIZED...      ✅ Verified.
 15. Testing Protected Institution Admin Provisioning...       ✅ Verified (Super Admin Only).
 16. Testing Prevention of Admin Provisioning by Student...   ✅ Verified (403 Forbidden).
 17. Testing Provisioning Guard for Unaccredited Inst...      ✅ Verified (400 Bad Request).
 18. Testing Negative RBAC: Student Blocked from Issuance...  ✅ Verified (403 Forbidden).
-18B. Testing Student Enrollment Token Generation & Claim...   ✅ Verified (Cryptographic Claim).
+18B. Testing Student Enrollment Token Generation & Claim...   ✅ Verified (Token Hashing, Email Guard, Atomic Concurrency).
 19. Testing Persistent Key Custody (AES-256-GCM / PBKDF2)... ✅ Verified (DB Signer Resolution).
 20. Testing Certificate Issuance & Real EVM Anchoring...     ✅ Verified (TxHash mined, issuer verified).
 20B. Testing Real Persistent Institutional Key Custody...     ✅ Verified (Non-RPC Decrypted Key Signer).

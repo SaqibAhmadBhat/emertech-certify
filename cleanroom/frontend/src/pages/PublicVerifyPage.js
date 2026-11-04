@@ -255,7 +255,7 @@ export default function PublicVerifyPage() {
             AI OCR utilizes Tesseract.js WebAssembly to extract text from physical documents for administrative review.
           </p>
           <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%' }}>
-            {loading ? 'Running Neural OCR Engine...' : 'Scan & Extract Text'}
+            {loading ? 'Running Tesseract.js WebAssembly OCR...' : 'Scan & Extract Text'}
           </button>
         </form>
       )}

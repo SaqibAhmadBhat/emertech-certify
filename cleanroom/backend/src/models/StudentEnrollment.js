@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 
 const studentEnrollmentSchema = new mongoose.Schema({
@@ -24,7 +25,7 @@ const studentEnrollmentSchema = new mongoose.Schema({
     lowercase: true,
     trim: true
   },
-  enrollmentToken: {
+  enrollmentTokenHash: {
     type: String,
     required: true,
     unique: true,
@@ -48,5 +49,12 @@ const studentEnrollmentSchema = new mongoose.Schema({
 });
 
 studentEnrollmentSchema.index({ institutionCode: 1, studentIdentifier: 1 }, { unique: true });
+
+studentEnrollmentSchema.statics.hashToken = function (rawToken) {
+  if (!rawToken || typeof rawToken !== 'string') {
+    throw new Error('Enrollment token is required for hashing.');
+  }
+  return crypto.createHash('sha256').update(rawToken.trim()).digest('hex');
+};
 
 module.exports = mongoose.model('StudentEnrollment', studentEnrollmentSchema);

@@ -243,7 +243,7 @@ Any modification to a single character, date, or grade alters the digest complet
 | **Mode 1: Direct Hash** | 64-char Hex Hash | Direct constant-time EVM mapping lookup `certificates[certHash]` | Web portal, API clients | Constant-time $O(1)$ EVM query. Public RPC latency governed by network round-trip time. |
 | **Mode 2: PDF Binary** | Uploaded `.pdf` File | Binary SHA-256 buffer hash computed and matched against on-chain state | Employers, HR portals | Streaming binary digest computation + on-chain lookup. |
 | **Mode 3: QR Payload** | Scanned 2D QR Code | Decodes embedded URL parameter, queries smart contract status | Smartphone camera | URL parameter resolution + smart contract query. |
-| **Mode 4: Neural OCR** | Scanned Image / Photo | Tesseract.js WebAssembly worker parses text, extracts ID, resolves hash | Physical paper verification | Client-side WASM neural network execution; speed depends on client CPU cores. |
+| **Mode 4: Tesseract.js WebAssembly OCR** | Scanned Image / Photo | Tesseract.js WebAssembly worker parses text, extracts ID, resolves hash | Physical paper verification | Client-side WASM execution; speed depends on client CPU cores. |
 
 ---
 
