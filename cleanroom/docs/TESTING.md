@@ -2,7 +2,7 @@
 
 **Developer**: Saqib Ahmad Bhat  
 **Institution**: Government College of Engineering, Tirunelveli  
-**Automated Test Suite**: 14 Smart Contract Unit Tests (Hardhat) & 37 Backend Integration Tests (Live EVM Consensus) = **51 Total Passing Automated Tests** (0 Failed, 0 Skipped).
+**Automated Test Suite**: 14 Smart Contract Unit Tests (Hardhat) & 37 Backend Integration Tests (Local Hardhat EVM integration testing) = **51 Total Passing Automated Tests** (1 Frontend Production Build Check, 52 Total CI Validation Checks, 0 Failed, 0 Skipped).
 
 ---
 
@@ -69,14 +69,14 @@ npm test
 9. **Super Admin Approval & On-Chain Accreditation**: Deploys on-chain transaction setting institution status to `2` (Authorized); verifies on-chain contract state.
 10. **Failed Authorization Rejection**: Attempts to authorize an invalid Ethereum address; asserts HTTP 400 and `onChainAuthorized: false`.
 11. **Unavailable Blockchain Handling**: Evaluates behavior when JSON-RPC is unreachable; asserts HTTP 502 Bad Gateway and prevents unverified database authorization.
-12. **Institution Suspension Transition & State Preservation Invariant**: Verifies that when blockchain is down, status in MongoDB remains `AUTHORIZED` (HTTP 502); upon active connection, transitions institution status to `3` (Suspended) on-chain and in MongoDB.
+12. **Institution Suspension & Revocation Lifecycle & Failure Resiliency**: Simulates unreachable RPC; asserts HTTP 502 Bad Gateway and confirms MongoDB status remains intact at AUTHORIZED with failure audit logs for both suspension and revocation attempts; executes genuine institutional revocation on-chain (status 4) and transitions to suspended (status 3) on-chain and in MongoDB.
 13. **Suspended Issuance Prevention**: Asserts that certificate issuance attempts while suspended are blocked with HTTP 403 Forbidden.
 14. **Institution Reactivation**: Re-accredits institution to `2` (Authorized) on smart contract.
 15. **Protected Institution Admin Provisioning**: Authenticated Super Admin provisions Institution Administrator account via `POST /api/v2/admin/institutions/:id/provision-admin`; asserts linkage to accredited institution code and wallet.
 16. **Unauthorized Admin Provisioning Rejection**: Non-Super Admin (Student) attempting to provision administrators is rejected with HTTP 403 Forbidden.
 17. **Unaccredited Institution Admin Provisioning Guard**: Attempting to provision an admin for a pending/unaccredited institution is rejected with HTTP 400 Bad Request.
 18. **Negative RBAC: Student Blocked from Issuance**: Student account attempting to invoke `/api/v2/institutions/issue` is rejected with HTTP 403 Forbidden.
-18B. **Student Enrollment Token Generation & Identity Claiming**: Institution Admin generates a cryptographic enrollment token (`POST /api/v2/institutions/enrollments`); duplicate enrollments are rejected (HTTP 409); student claims identity via `POST /api/v2/auth/claim-identity` and receives refreshed JWT.
+18B. **Student Enrollment Token Generation & Identity Claiming**: Institution Admin generates a cryptographic enrollment token; plaintext tokens are never stored (only SHA-256 hashes); duplicate enrollments are rejected (HTTP 409); student claims identity with email matching and atomic concurrency race guards; returns refreshed JWT.
 19. **Persistent Key Custody (AES-256-GCM via PBKDF2 & Database Signer)**: Stores encrypted private key in MongoDB using PBKDF2 derived vault key; resets in-memory cache; resolves signer from database record; verifies cryptographic message signing and address recovery.
 20. **Real On-Chain Issuance with Institutional Signature**: Mined transaction on EVM; asserts `msg.sender` and `onChainRecord.issuer` strictly match institution wallet `0x70997970C51812dc3A010C7d01b50e0d17dc79C8`.
 20B. **Real Persistent Institutional Key Custody & EVM Issuance (Non-RPC Wallet)**: Generates random wallet not unlocked on provider, funds with ETH, stores encrypted key via custody endpoint, wipes in-memory cache, and issues certificate on-chain with verified matching contract issuer.

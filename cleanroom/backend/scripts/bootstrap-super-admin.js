@@ -32,35 +32,85 @@ function validatePasswordPolicy(password) {
 }
 
 function promptInteractive(question, isSecret = false) {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
+  return new Promise((resolve, reject) => {
+    if (!process.stdin.isTTY) {
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+      });
+      rl.question(question, (answer) => {
+        rl.close();
+        resolve(answer.trim());
+      });
+      return;
+    }
 
-    if (isSecret && process.stdin.isTTY) {
+    if (isSecret) {
       process.stdout.write(question);
       let input = '';
-      const onData = (char) => {
-        char = char + '';
-        switch (char) {
-          case '\n':
-          case '\r':
-          case '\u0004':
-            process.stdin.removeListener('data', onData);
-            break;
-          default:
+      const wasRaw = Boolean(process.stdin.isRaw);
+
+      const restoreTerminal = () => {
+        try {
+          if (process.stdin.isTTY && typeof process.stdin.setRawMode === 'function') {
+            process.stdin.setRawMode(wasRaw);
+          }
+          process.stdin.pause();
+        } catch (_) {}
+      };
+
+      const cleanup = () => {
+        process.stdin.removeListener('data', onData);
+        restoreTerminal();
+      };
+
+      const onData = (chunk) => {
+        const str = chunk.toString('utf8');
+        for (let i = 0; i < str.length; i++) {
+          const char = str[i];
+          // Enter (Carriage return or Line feed)
+          if (char === '\r' || char === '\n') {
+            cleanup();
+            process.stdout.write('\n');
+            return resolve(input.trim());
+          }
+          // Ctrl+C (SIGINT)
+          if (char === '\u0003') {
+            cleanup();
+            process.stdout.write('\n');
+            process.exit(130);
+          }
+          // Ctrl+D (EOF)
+          if (char === '\u0004') {
+            cleanup();
+            process.stdout.write('\n');
+            return resolve(input.trim());
+          }
+          // Backspace / Delete
+          if (char === '\u0008' || char === '\u007f') {
+            if (input.length > 0) {
+              input = input.slice(0, -1);
+            }
+          } else if (char.charCodeAt(0) >= 32) {
+            // Printable character - accumulate silently without echo
             input += char;
-            break;
+          }
         }
       };
-      process.stdin.on('data', onData);
-      rl.question('', () => {
-        rl.close();
-        console.log('');
-        resolve(input.trim());
-      });
+
+      try {
+        process.stdin.setRawMode(true);
+        process.stdin.resume();
+        process.stdin.on('data', onData);
+      } catch (err) {
+        restoreTerminal();
+        reject(err);
+      }
     } else {
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+      });
       rl.question(question, (answer) => {
         rl.close();
         resolve(answer.trim());

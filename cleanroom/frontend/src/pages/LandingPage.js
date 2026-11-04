@@ -69,7 +69,7 @@ export default function LandingPage() {
           margin: '0 auto 2.5rem',
           lineHeight: 1.7
         }}>
-          A clean-room decentralized credential verification architecture engineered to eliminate diploma fraud. Combines Ethereum smart contracts, deterministic SHA-256 cryptographic document digests, IPFS decentralized storage, and Tesseract.js neural OCR to enable instantaneous, tamper-evident verification.
+          A clean-room decentralized credential verification architecture engineered to eliminate diploma fraud. Combines Ethereum smart contracts, deterministic SHA-256 cryptographic document digests, IPFS decentralized storage, and Tesseract.js WebAssembly OCR to enable instantaneous, tamper-evident verification.
         </p>
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>

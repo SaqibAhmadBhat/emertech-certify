@@ -308,7 +308,7 @@ class VerifyController {
 
       res.status(200).json({
         success: true,
-        ocrEngine: 'Tesseract.js WebAssembly Neural OCR',
+        ocrEngine: 'Tesseract.js WebAssembly OCR',
         extractedText: ocrRes.text,
         parsedEntities: parsed,
         matchFound: Boolean(matchedCert),

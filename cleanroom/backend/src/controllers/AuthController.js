@@ -111,9 +111,10 @@ class AuthController {
 
       const cleanToken = enrollmentToken.trim();
       const cleanId = studentIdentifier.toUpperCase().trim();
+      const tokenHash = StudentEnrollment.hashToken(cleanToken);
 
       const enrollment = await StudentEnrollment.findOne({
-        enrollmentToken: cleanToken,
+        enrollmentTokenHash: tokenHash,
         studentIdentifier: cleanId
       });
 
@@ -131,6 +132,16 @@ class AuthController {
         });
       }
 
+      // Require the authenticated student's email to match the email recorded by the institution
+      const authUserEmail = (req.user.email || '').toLowerCase().trim();
+      const studentEmailOnRecord = (enrollment.studentEmail || '').toLowerCase().trim();
+      if (authUserEmail !== studentEmailOnRecord) {
+        return res.status(403).json({
+          success: false,
+          message: `Identity claim rejected: Authenticated account email '${authUserEmail}' does not match the official student email on record ('${studentEmailOnRecord}') for this enrollment.`
+        });
+      }
+
       // Check if user is already bound to a different studentIdentifier
       const user = await User.findById(req.user._id);
       if (!user) {
@@ -144,14 +155,28 @@ class AuthController {
         });
       }
 
-      // Atomically link student identity
-      enrollment.isClaimed = true;
-      enrollment.claimedByUserId = user._id;
-      enrollment.claimedAt = new Date();
-      await enrollment.save();
+      // Atomically link student identity via conditional update to prevent race conditions
+      const claimedEnrollment = await StudentEnrollment.findOneAndUpdate(
+        { _id: enrollment._id, isClaimed: false },
+        {
+          $set: {
+            isClaimed: true,
+            claimedByUserId: user._id,
+            claimedAt: new Date()
+          }
+        },
+        { new: true }
+      );
 
-      user.studentIdentifier = enrollment.studentIdentifier;
-      user.institutionCode = enrollment.institutionCode;
+      if (!claimedEnrollment) {
+        return res.status(409).json({
+          success: false,
+          message: 'Concurrent claim conflict: This enrollment record has already been claimed by another request.'
+        });
+      }
+
+      user.studentIdentifier = claimedEnrollment.studentIdentifier;
+      user.institutionCode = claimedEnrollment.institutionCode;
       await user.save();
 
       await AuditLog.create({
@@ -159,12 +184,12 @@ class AuthController {
         actorId: user._id,
         actorEmail: user.email,
         actorRole: user.role,
-        institutionCode: enrollment.institutionCode,
+        institutionCode: claimedEnrollment.institutionCode,
         clientIp: req.ip,
         diagnosticDetails: {
-          studentIdentifier: enrollment.studentIdentifier,
-          institutionCode: enrollment.institutionCode,
-          enrollmentId: enrollment._id
+          studentIdentifier: claimedEnrollment.studentIdentifier,
+          institutionCode: claimedEnrollment.institutionCode,
+          enrollmentId: claimedEnrollment._id
         }
       });
 

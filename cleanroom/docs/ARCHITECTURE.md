@@ -15,7 +15,7 @@ Emertech Certify implements a **hybrid decentralized architecture** engineered f
 [ Tier 1: Client Verification Layer ]
   ├── React 19 SPA (Original UI / Glassmorphism)
   ├── Web Crypto API (Client-side SHA-256 computation)
-  └── Tesseract.js WebAssembly (Neural OCR engine)
+  └── Tesseract.js WebAssembly (Tesseract.js WebAssembly OCR engine)
           │
           ▼  (REST API v2 / JWT Bearer)
 [ Tier 2: Application & API Layer ]
@@ -94,7 +94,7 @@ Unlike legacy architectures that rely on headless Chromium (Puppeteer)—which c
 | **Mode 1: Direct Hash** | 64-char Hex Hash | Direct constant-time EVM mapping lookup `certificates[certHash]` | Web portal, API clients | **Local Test Benchmark**: < 50ms<br>**Public RPC**: 200ms–1.5s (depends on network RTT) |
 | **Mode 2: PDF Binary** | Uploaded `.pdf` File | Binary SHA-256 buffer hash computed and matched against on-chain state | Employers, HR portals | **Local Test Benchmark**: < 80ms<br>**Public RPC**: 300ms–2.0s |
 | **Mode 3: QR Payload** | Scanned 2D QR Code | Decodes embedded URL parameter, queries smart contract status | Smartphone camera | **Local Test Benchmark**: < 60ms<br>**Public RPC**: 250ms–1.8s |
-| **Mode 4: Neural OCR** | Scanned Image / Photo | Tesseract.js WebAssembly worker parses text, extracts ID, resolves hash | Physical paper verification | **Local Client Benchmark**: 1.2s–3.5s (depends on CPU WASM threads) |
+| **Mode 4: Tesseract.js WebAssembly OCR** | Scanned Image / Photo | Tesseract.js WebAssembly worker parses text, extracts ID, resolves hash | Physical paper verification | **Local Client Benchmark**: 1.2s–3.5s (depends on CPU WASM threads) |
 
 > **Latency Disclosure**: Sub-500ms verification is an observed benchmark in local and low-latency testing environments. On public networks (e.g. Ethereum Sepolia, Polygon), verification latency is governed by JSON-RPC node round-trip times and network congestion.
 
