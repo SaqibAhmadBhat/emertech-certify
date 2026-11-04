@@ -5,10 +5,9 @@ The software in this repository contains two evolutionary tiers with distinct co
 ================================================================================
 1. Upstream Foundation & Historical v1 Prototype (Directories: backend/, contracts/, frontend/)
 ================================================================================
-Original Work:
-Copyright (c) 2024 Alwin James
 
-Modifications, Security Hardening & Enhancements:
+
+
 Copyright (c) 2026 Saqib Ahmad Bhat
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

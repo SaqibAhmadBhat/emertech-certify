@@ -31,7 +31,11 @@ export default function LoginPage({ onLoginSuccess }) {
         navigate('/student');
       }
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || 'Authentication failed. Please verify credentials.');
+      if (err.response?.status === 404 || err.response?.status === 405 || !err.response) {
+        setErrorMsg(`Backend API offline or unreachable (HTTP ${err.response?.status || 'Network Error'}). A running backend service is required for authentication.`);
+      } else {
+        setErrorMsg(err.response?.data?.message || 'Authentication failed. Please verify credentials.');
+      }
     } finally {
       setLoading(false);
     }

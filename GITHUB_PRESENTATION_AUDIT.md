@@ -45,7 +45,7 @@ The repository README includes verified, dynamic shields.io status badges:
 | **Backend Runtime** | Tech Stack | `Node.js >= 20.x (Express / MongoDB)` |
 | **Frontend Framework** | Tech Stack | `React 18 / Tailwind CSS` |
 | **License Scope** | Legal | `MIT (Cleanroom v2.0 Dual-Scoped)` |
-| **Security Audited** | Governance | `Rate Limiting, In-Memory Vault, Zero-Knowledge OCR` |
+| **Security Audited** | Governance | `Rate Limiting, Authenticated Key Custody, Zero-PII Ledger` |
 
 ---
 
